@@ -1,0 +1,21 @@
+services:
+  python:
+
+    image: python:latest
+
+    # build:
+    #   context: .
+    #   dockerfile: python.Dockerfile
+
+    stdin_open: true
+    tty: true
+
+    volumes:
+      - type: bind
+        source: .
+        target: /home/python
+
+    networks:
+      - llm_network
+
+    container_name: llm-python-container

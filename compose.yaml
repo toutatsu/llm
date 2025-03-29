@@ -1,0 +1,8 @@
+include:
+  - ollama/compose.ollama.yaml
+  - openwebui/compose.openwebui.yaml
+  - python/compose.python.yaml
+
+networks:
+  llm_network:
+    driver: bridge
