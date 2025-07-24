@@ -1,11 +1,11 @@
 services:
   python:
 
-    image: python:latest
+    # image: python:latest
 
-    # build:
-    #   context: .
-    #   dockerfile: python.Dockerfile
+    build:
+      context: .
+      dockerfile: python.Dockerfile
 
     stdin_open: true
     tty: true
@@ -13,7 +13,7 @@ services:
     volumes:
       - type: bind
         source: .
-        target: /home/python
+        target: /home/llm
 
     networks:
       - llm_network

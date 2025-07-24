@@ -3,28 +3,62 @@
 
 services:
   open-webui:
+    image: ghcr.io/open-webui/open-webui:${OPENWEBUI_DOCKER_TAG-latest}
     # build:
     #   context: .
     #   args:
     #     OLLAMA_BASE_URL: '/ollama'
     #   dockerfile: openwebui.Dockerfile
-    image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
-    container_name: llm-open-webui
-    volumes:
-      - open-webui:/app/backend/data
-    depends_on:
-      - ollama
+    
+    container_name: llm-openwebui-container
+
     ports:
-      - ${OPEN_WEBUI_PORT-3000}:8080
+      - ${OPEN_WEBUI_PORT-53000}:8080
+
+    volumes:
+      - type: volume
+        source: open-webui
+        target: /app/backend/data
+
+    depends_on:
+      ollama:
+        condition: service_started
+    
     environment:
       - 'OLLAMA_BASE_URL=http://ollama:11434'
+      - ENABLE_WEBSOCKET_SUPPORT=false
       # - 'WEBUI_SECRET_KEY='
+
     extra_hosts:
       - host.docker.internal:host-gateway
-    # restart: unless-stopped
+    
+    networks:
+      - llm_network
+
+# https://github.com/open-webui/pipelines?tab=readme-ov-file#docker-compose-together-with-open-webui
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:main
+
+    ports:
+      - target: 9099
+        published: 9099
+        mode: host
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    volumes:
+      - pipelines:/app/pipelines
+
+    restart: always
+
+    environment:
+      - PIPELINES_API_KEY=0p3n-w3bu!
+      # - PIPELINES_URLS="https://github.com/open-webui/pipelines/blob/main/examples/filters/detoxify_filter_pipeline.py"
     
     networks:
       - llm_network
 
 volumes:
   open-webui: {}
+  pipelines: {}

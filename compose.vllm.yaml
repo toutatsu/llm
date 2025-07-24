@@ -1,0 +1,38 @@
+services:
+  vllm:
+    image: vllm/vllm-openai:${VLLM_DOCKER_TAG-latest}
+    container_name: llm-vllm-container
+
+    volumes:
+      - type: bind
+        source: .
+        target: /root/.cache/huggingface
+
+    entrypoint: [
+      "python3",
+      "-m",
+      "vllm.entrypoints.openai.api_server",
+      "--model",
+      "bartowski/Llama-3.3-70B-Instruct-GGUF",
+    ]
+
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
+
+    command: [
+      "--trust-remote-code",
+      "--model",
+      "bartowski/Llama-3.3-70B-Instruct-GGUF",
+      "--port",
+      "${VLLM_PORT-11434}",
+      "--dtype",
+      "float16",
+      "--max-model-len",
+      "10000",
+    ]
+
+    ports:
+      - ${VLLM_PORT-11434}:11434
+
+    networks:
+      - llm_network
