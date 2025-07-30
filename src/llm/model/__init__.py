@@ -1,4 +1,4 @@
-from chat_ollama import llm
+from llm.model.chat_ollama import llm
 
 
 def stream_response(prompt: str):

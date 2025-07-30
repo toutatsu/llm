@@ -12,7 +12,7 @@ class Pipeline:
 
     class Valves(BaseModel):
         API_URL: str = Field(
-            default="http://localhost:59000/stream",
+            default="http://python:59000/stream",
             description="API URL for the OpenWebUI"
         )
 
@@ -54,24 +54,27 @@ class Pipeline:
         body: dict,
     ) -> str:
 
-        print(f"{self=}")
-        print(f"{user_message=}")
-        print(f"{model_id=}")
-        print(f"{messages=}")
-        print(f"{body=}")
+        # print(f"{self=}")
+        # print(f"{user_message=}")
+        # print(f"{model_id=}")
+        # print(f"{messages=}")
+        # print(f"{body=}")
 
-        return "test"
+        data = {
+            "messages": [[msg['role'], msg['content']] for msg  in messages],
+        }
+        print(f"{data=}")
 
-        # response = requests.post(
-        #     url=self.valves.API_URL,
-        #     json={},
-        #     headers={
-        #         "accept": "application/json",
-        #         "Content-Type": "application/json",
-        #     },
-        #     stream=True,
-        # )
+        response = requests.post(
+            url=self.valves.API_URL,
+            json=data,
+            headers={
+                "accept": "text/event-stream",
+                "Content-Type": "application/json",
+            },
+            stream=True,
+        )
 
-        # response.raise_for_status()
+        response.raise_for_status()
 
-        # return response.iter_lines()
+        return response.iter_lines()

@@ -7,10 +7,21 @@ app = FastAPI(
     version="1.0.0"
 )
 
+from pydantic import BaseModel
+
+from typing import Annotated
 import asyncio
 import json
 
-async def stream_response():
+from langgraph.graph.message import add_messages
+from llm.langgraph import react_agent_graph
+
+class State(BaseModel):
+    messages: Annotated[list, add_messages]
+
+async def stream_response(inputs: State):
+
+    print(inputs.messages)
 
     start_message = {
         "choices": [
@@ -18,10 +29,95 @@ async def stream_response():
                 "delta": {},
                 "finish_reason": None,
             }
+        ]
+    }
+    yield f"data: {json.dumps(start_message)}\n\n"
+
+    for token in ["this ", "is ", "a ", "reasoning ", "message", "."]:
+        message = {
+            "choices": [
+                {
+                    "delta": {
+                        "reasoning_content": token,
+                    },
+                    "finish_reason": None,
+                }
+            ],
+        }
+        yield f"data: {json.dumps(message)}\n\n"
+        await asyncio.sleep(0.5)
+
+    for token in ["this ", "is ", "a ", "test ", "message", "."]:
+        message = {
+            "choices": [
+                {
+                    "delta": {
+                        "content": token,
+                    },
+                    "finish_reason": None,
+                }
+            ],
+        }
+        yield f"data: {json.dumps(message)}\n\n"
+        await asyncio.sleep(0.5)
+    
+    message = {
+        "choices": [
+            {
+                "delta": {
+                    "content": "\n\nimage message\n![image](https://placehold.jp/150x150.png)",
+                },
+                "finish_reason": None,
+            }
         ],
     }
+    yield f"data: {json.dumps(message)}\n\n"
 
-    yield f"data: {json.dumps(start_message)}\n\n"
+    message = {
+        "choices": [
+            {
+                "delta": {
+                    "content": "\n\nmathematical expression\n$e^{i\pi} + 1 = 0$",
+                },
+                "finish_reason": None,
+            }
+        ],
+    }
+    yield f"data: {json.dumps(message)}\n\n"
+
+    table_data = """
+| index | value |
+| --- | --- |
+| foo  | 1  |
+| bar  | 2  |
+| buzz | 3  |"""
+
+    message = {
+        "choices": [
+            {
+                "delta": {
+                    "content": f"\n\ntable data\n{table_data}",
+                },
+                "finish_reason": None,
+            }
+        ],
+    }
+    yield f"data: {json.dumps(message)}\n\n"
+
+
+    async for token, metadata in react_agent_graph.astream(input=inputs, stream_mode="messages"):
+        message = {
+            "choices": [
+                {
+                    "delta": {
+                        "content": token.content,
+                    },
+                    "finish_reason": None,
+                }
+            ],
+        }
+        yield f"data: {json.dumps(message)}\n\n"
+
 
     end_message = {
         "choices": [
@@ -35,12 +131,12 @@ async def stream_response():
 
 
 @app.post("/stream")
-async def stream():
+async def stream(inputs: State):
     """
     Stream API endpoint for testing.
     """
     return StreamingResponse(
-        content=stream_response(),
+        content=stream_response(inputs=inputs),
         status_code=200,
         headers={
             "Cache-Control": "no-cache",
