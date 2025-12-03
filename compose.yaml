@@ -3,6 +3,7 @@ include:
   # - compose.vllm.yaml
   - compose.openwebui.yaml
   - compose.python.yaml
+  - compose.postgres.yaml
 
 networks:
   llm_network:

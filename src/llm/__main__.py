@@ -16,7 +16,8 @@ while True:
 
     with Live("", console=console, refresh_per_second=10) as live:
         for step in deep_agent.stream(
-            {"messages": [{"role": "user", "content": prompt}]},
+            input={"messages": [{"role": "user", "content": prompt}]},
+            config={"configurable": {"thread_id": "1"}},
             stream_mode=["messages"],
         ):
             logger.debug(step)
