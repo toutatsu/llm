@@ -2,12 +2,15 @@
 from deepagents import create_deep_agent
 
 from llm.chat_models import get_chat_model
+from llm.tools.internet_search import perform_google_search
 
 
 def get_deep_agent():
 
     deep_agent = create_deep_agent(
-        model=get_chat_model(), tools=[], system_prompt="system prompt"
+        model=get_chat_model(),
+        tools=[perform_google_search],
+        system_prompt="system prompt",
     )
     return deep_agent
 
