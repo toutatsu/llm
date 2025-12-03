@@ -4,6 +4,7 @@ from deepagents.backends import FilesystemBackend
 
 from llm.chat_models import get_chat_model
 from llm.tools.internet_search import perform_google_search
+from llm.agent.middleware.wrap_tool_call import monitor_tool
 
 
 def get_deep_agent():
@@ -12,6 +13,9 @@ def get_deep_agent():
         model=get_chat_model(),
         tools=[perform_google_search],
         system_prompt="system prompt",
+        middleware=[
+            monitor_tool,
+        ],
         backend=FilesystemBackend(
             root_dir="/home/llm/data/agent_filesystem/",
             virtual_mode=True,
