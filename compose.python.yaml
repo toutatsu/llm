@@ -10,10 +10,16 @@ services:
     stdin_open: true
     tty: true
 
+    env_file:
+      - .env
+
     volumes:
       - type: bind
         source: .
         target: /home/llm
+
+    ports:
+      - ${LLM_API_PORT}:${LLM_API_PORT}
 
     networks:
       - llm_network
