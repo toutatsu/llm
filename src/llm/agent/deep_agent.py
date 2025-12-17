@@ -2,7 +2,7 @@
 
 import psycopg
 
-from deepagents import create_deep_agent
+from deepagents import create_deep_agent, CompiledSubAgent
 from deepagents.backends import FilesystemBackend
 
 from langgraph.checkpoint.memory import InMemorySaver
@@ -13,7 +13,7 @@ from langgraph.store.memory import InMemoryStore
 from llm.chat_models import get_chat_model
 from llm.tools.internet_search import perform_google_search
 from llm.agent.middleware.wrap_tool_call import monitor_tool
-
+from llm.agent.research_agent import get_research_agent
 
 def get_postgres_connection():
 
@@ -61,6 +61,14 @@ def get_postgres_checkpointer(conn):
 #     return postgresql_checkpointer
 
 
+DEEP_AGENT_SYSTEM_PROMPT = """
+あなたはユーザからの指示に基づき回答を行うdeep_agentです
+外部の情報が必要な場合、toolやsubagentsを利用して情報を取得してください
+
+回答は日本語で行ってください
+"""
+
+
 def get_deep_agent():
 
     conn = get_postgres_connection()
@@ -70,10 +78,17 @@ def get_deep_agent():
 
     deep_agent = create_deep_agent(
         model=get_chat_model(),
-        tools=[perform_google_search],
-        system_prompt="system prompt",
+        tools=[],
+        system_prompt=DEEP_AGENT_SYSTEM_PROMPT,
         middleware=[
             monitor_tool,
+        ],
+        subagents=[
+            CompiledSubAgent(
+                name="research_agent",
+                description="情報収集を行うエージェント",
+                runnable=get_research_agent(),
+            )
         ],
         # checkpointer=InMemorySaver(),
         checkpointer=postgresql_checkpointer,
