@@ -1,10 +1,12 @@
 import os
 from dotenv import load_dotenv
-
 load_dotenv()
+from typing import Any
 
 from pydantic import BaseModel, Field
 from langchain_google_community import GoogleSearchAPIWrapper
+
+from llm.logger import logger
 
 google = GoogleSearchAPIWrapper(
     google_api_key=os.environ.get("GOOGLE_API_KEY"),
@@ -21,7 +23,7 @@ class GoogleSearchRequest(BaseModel):
     num_results: int = Field(5, description="Number of search results to return.")
 
 
-def perform_google_search(request: GoogleSearchRequest) -> str:
+def perform_google_search(request: GoogleSearchRequest) -> list[dict[Any, Any]]:
     """
     Perform a Google search using the provided query and number of results.
     Returns the search results as a string.
@@ -31,7 +33,12 @@ def perform_google_search(request: GoogleSearchRequest) -> str:
     Returns:
         str: The search results.
     """
-    results = google.results(query=request.query, num_results=request.num_results)
+
+    try:
+        results = google.results(query=request.query, num_results=request.num_results)
+    except Exception as e:
+        logger.error(e)
+        raise e
     return results
 
 

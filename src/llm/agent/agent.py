@@ -5,7 +5,10 @@ from llm.chat_models import get_chat_model
 
 
 def get_agent():
-    agent = create_agent(model=get_chat_model())
+    agent = create_agent(
+        model=get_chat_model(),
+        tools=[],
+    )
     return agent
 
 

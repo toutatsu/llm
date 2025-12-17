@@ -11,53 +11,34 @@ router = APIRouter()
 
 from llm.agent.deep_agent import get_deep_agent
 from llm.logger import logger
+logger.debug(f"モジュール: {__name__:<30}の実行開始")
 
-agent = get_deep_agent()
+deep_agent = get_deep_agent()
 
 
 class ChatRequest(BaseModel):
     messages: list[dict[str, Any]] = [{"role": "user", "content": "test"}]
 
 
+from llm.api.routers.agent import agent_stream, agent_astream
+
 @router.post("/stream")
 def stream(request: ChatRequest):
-
-    def agent_stream(agent):
-        try:
-            for token, metadata in agent.stream(
-                input={"messages": request.messages},
-                stream_mode="messages",
-                config={"configurable": {"thread_id": "1"}},
-            ):
-                token: AIMessageChunk
-                yield token.content
-        except Exception as e:
-            yield f"\n[Error] {e}"
-            raise e
+    
+    logger.info(f"APIの呼び出し: /deeo_agent/stream")
 
     return StreamingResponse(
-        content=agent_stream(agent),
+        content=agent_stream(deep_agent, request.messages),
         media_type="text/event-stream",
     )
 
+@router.post("/astream")
+async def astream(request: ChatRequest):
+    
+    logger.info(f"APIの呼び出し: /deeo_agent/atream")
 
-# @router.post("/astream")
-# async def astream(request: ChatRequest):
+    return StreamingResponse(
+        content=agent_astream(deep_agent, request.messages),
+        media_type="text/event-stream",
+    )
 
-#     async def agent_astream(agent):
-#         try:
-#             async for token, metadata in agent.astream(
-#                 input={"messages": request.messages},
-#                 stream_mode="messages",
-#                 config={"configurable": {"thread_id": "1"}},
-#             ):
-#                 token: AIMessageChunk
-#                 yield token.content
-#         except Exception as e:
-#             yield f"\n[Error] {e}"
-#             raise e
-
-#     return StreamingResponse(
-#         content=agent_astream(agent),
-#         media_type="text/event-stream",
-#     )
