@@ -25,3 +25,7 @@ services:
       - llm_network
 
     container_name: llm-python-container
+
+
+    entrypoint: [ "sh", "-c" ]
+    command: [ "uv run fastapi run /home/llm/src/llm/api --port $LLM_API_PORT --reload" ]
