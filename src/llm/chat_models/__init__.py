@@ -1,27 +1,31 @@
 from langchain.chat_models import init_chat_model
 
 
-def get_chat_model():
+def get_chat_model(
+        model_provider="ollama",
+        model="gpt-oss:20b-cloud"
+    ):
 
     # https://reference.langchain.com/python/langchain/models/#langchain.chat_models.init_chat_model
 
-    # local ollama
-    model="gemma3:1b"
-    model_provider="openai"
-    kwargs = {
-        "base_url": "http://ollama:11434/v1",
-        "verbose":True,
-        "api_key":"dummy",
-    }
-
-    # # ollama Cloud models
-    # # https://ollama.com/blog/cloud-models
-    # model = "gpt-oss:20b-cloud"
-    # model_provider = "ollama"
+    # # local ollama
+    # model="gemma3:1b"
+    # model_provider="openai"
     # kwargs = {
-    #     "base_url": "https://ollama.com",
-    #     "verbose": True,
+    #     "base_url": "http://ollama:11434/v1",
+    #     "verbose":True,
+    #     "api_key":"dummy",
     # }
+
+    # ollama Cloud models
+    # https://ollama.com/blog/cloud-models
+    model = model
+    # model = "ministral-3:14b-cloud"
+    model_provider = "ollama"
+    kwargs = {
+        "base_url": "https://ollama.com",
+        "verbose": True,
+    }
 
     # # google genai
     # model="gemini-2.5-flash"
