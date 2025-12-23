@@ -14,6 +14,9 @@ from llm.chat_models import get_chat_model
 from llm.tools.internet_search import perform_google_search
 from llm.agent.middleware.wrap_tool_call import monitor_tool
 from llm.agent.research_agent import get_research_agent
+from llm.agent.vlm_agent import get_vlm_agent
+from llm.agent.coding_agent import get_coding_agent
+
 
 def get_postgres_connection():
 
@@ -88,7 +91,17 @@ def get_deep_agent():
                 name="research_agent",
                 description="情報収集を行うエージェント",
                 runnable=get_research_agent(),
-            )
+            ),
+            CompiledSubAgent(
+                name="vlm_agent",
+                description="ファイルパスやURLで指定された画像を読み込み、内容の確認を行うエージェント",
+                runnable=get_vlm_agent(),
+            ),
+            CompiledSubAgent(
+                name="coding_agent",
+                description="shellコマンドやプログラムを生成、実行するエージェント",
+                runnable=get_coding_agent(),
+            ),
         ],
         # checkpointer=InMemorySaver(),
         checkpointer=postgresql_checkpointer,
@@ -97,6 +110,10 @@ def get_deep_agent():
             root_dir="/home/llm/data/agent_filesystem/",
             virtual_mode=True,
         ),
+        interrupt_on={
+            "read_file": False,
+            "write_file": True,
+        },
     )
 
     return deep_agent
