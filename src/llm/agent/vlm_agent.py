@@ -1,11 +1,20 @@
 # https://docs.langchain.com/oss/python/langchain/agents
 import base64
+from pathlib import Path
+
 import requests
 from langchain.agents import create_agent
 
 from llm.chat_models import get_chat_model
 from llm.logger import logger
 
+
+
+def get_base64_from_local_image_path(image_path: str) -> str:
+
+    assert Path(image_path).exists()
+    image_bytes: bytes = open(Path(image_path), "rb").read()
+    return base64.b64encode(image_bytes).decode("utf-8")
 
 def get_base64_from_image_url(url: str) -> str:
     """
