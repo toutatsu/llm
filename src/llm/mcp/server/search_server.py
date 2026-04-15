@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 from fastmcp import FastMCP
 from langchain_google_community import GoogleSearchAPIWrapper
 
+from llm.mcp.server._utils import tool_error_handler
+
 load_dotenv()
 
 mcp = FastMCP("search-server")
@@ -22,6 +24,7 @@ _google = GoogleSearchAPIWrapper(
 
 
 @mcp.tool()
+@tool_error_handler
 def google_search(query: str, num_results: int = 5) -> list[dict]:
     """Google検索を実行し、結果を返します。
 

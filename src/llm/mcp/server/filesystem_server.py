@@ -14,10 +14,13 @@ from pathlib import Path
 import requests
 from fastmcp import FastMCP
 
+from llm.mcp.server._utils import tool_error_handler
+
 mcp = FastMCP("filesystem-server")
 
 
 @mcp.resource("file:///{path}")
+@tool_error_handler
 def read_text_file(path: str) -> str:
     """ローカルのテキストファイルを読み取ります。
 
@@ -33,6 +36,7 @@ def read_text_file(path: str) -> str:
 
 
 @mcp.tool()
+@tool_error_handler
 def read_image_as_base64(source: str) -> str:
     """ローカルパスまたはURLから画像を読み込み、base64エンコードされたデータを返します。
 

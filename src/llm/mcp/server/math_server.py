@@ -10,10 +10,13 @@ import sys
 
 from fastmcp import FastMCP
 
+from llm.mcp.server._utils import tool_error_handler
+
 mcp = FastMCP("math-server")
 
 
 @mcp.tool()
+@tool_error_handler
 def add(a: float, b: float) -> float:
     """2つの数値を足し算します。
 
@@ -25,6 +28,7 @@ def add(a: float, b: float) -> float:
 
 
 @mcp.tool()
+@tool_error_handler
 def calculate(expression: str) -> str:
     """数式を評価して結果を返します（四則演算・べき乗・平方根など）。
 

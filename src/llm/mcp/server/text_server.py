@@ -11,10 +11,13 @@ import sys
 
 from fastmcp import FastMCP
 
+from llm.mcp.server._utils import tool_error_handler
+
 mcp = FastMCP("text-server")
 
 
 @mcp.tool()
+@tool_error_handler
 def word_count(text: str) -> dict:
     """テキストの文字数・単語数・行数を返します。
 
