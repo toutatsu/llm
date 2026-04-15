@@ -1,0 +1,31 @@
+{
+  "mcpServers": {
+    "math-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/toutatsu/Desktop/git-repositories/llm",
+        "run",
+        "math-server"
+      ]
+    },
+    "text-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/toutatsu/Desktop/git-repositories/llm",
+        "run",
+        "text-server"
+      ]
+    },
+    "filesystem-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/toutatsu/Desktop/git-repositories/llm",
+        "run",
+        "filesystem-server"
+      ]
+    }
+  }
+}

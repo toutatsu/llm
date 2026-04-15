@@ -1,0 +1,55 @@
+"""langchain-mcp-adapters を使ったLangGraph agent + MCPサーバ接続のサンプル。
+
+MultiServerMCPClient で math-server / text-server に stdio 接続し、
+LangGraph の ReAct エージェントからツールを呼び出す。
+"""
+
+import asyncio
+from pathlib import Path
+
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.prebuilt import create_react_agent
+
+from llm.chat_models import get_chat_model
+
+# llm パッケージのルートディレクトリ（uv run のディレクトリ指定に使用）
+# __file__ = src/llm/mcp/client/langchain_client.py → parents[4] = プロジェクトルート
+_PROJECT_DIR = str(Path(__file__).parents[4])
+
+_SERVER_CONFIG = {
+    "math-server": {
+        "command": "uv",
+        "args": ["--directory", _PROJECT_DIR, "run", "math-server"],
+        "transport": "stdio",
+    },
+    "text-server": {
+        "command": "uv",
+        "args": ["--directory", _PROJECT_DIR, "run", "text-server"],
+        "transport": "stdio",
+    },
+}
+
+
+async def main() -> None:
+    model = get_chat_model()
+
+    async with MultiServerMCPClient(_SERVER_CONFIG) as client:
+        tools = await client.get_tools()
+        print(f"取得したツール: {[t.name for t in tools]}\n")
+
+        agent = create_react_agent(model, tools)
+
+        queries = [
+            "3 と 5 を足してください。",
+            "math.sqrt(256) を計算してください。",
+            "次のテキストの文字数・単語数・行数を教えてください：\nHello world\nfoo bar baz",
+        ]
+
+        for query in queries:
+            print(f"Q: {query}")
+            response = await agent.ainvoke({"messages": query})
+            print(f"A: {response['messages'][-1].content}\n")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -86,6 +86,25 @@ docker container exec -it llm-ollama-container ollama pull hf.co/LiquidAI/LFM2.5
 | `coding_agent` | コード生成・シェルコマンド実行 | ShellTool |
 | `structured_output_agent` | Pydanticスキーマで検証された出力生成 | - |
 
+## MCPサーバ
+
+[Model Context Protocol](https://modelcontextprotocol.io/) サーバを `src/llm/mcp/server/` に実装。
+llm パッケージのスクリプトとして `uv run` で起動できる。
+
+| スクリプト | モジュール | 提供機能 |
+|-----------|-----------|---------|
+| `math-server` | `llm.mcp.server.math_server` | 計算ツール（`add`, `calculate`） |
+| `text-server` | `llm.mcp.server.text_server` | テキストツール（`word_count`）、コードレビュープロンプト |
+| `filesystem-server` | `llm.mcp.server.filesystem_server` | ローカルファイル読み取りリソース |
+
+Claude Code / Claude Desktop から利用する場合は `mcp/mcp_config.json` を参照。
+
+```sh
+# 接続・動作確認
+uv run mcp-demo        # fastmcp.Client による各サーバのデモ
+uv run mcp-langchain   # LangGraph agent + MCPサーバ接続デモ
+```
+
 ## データ永続化
 
 - **PostgreSQL**: 会話スレッドの状態をcheckpointerで保存

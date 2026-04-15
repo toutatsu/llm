@@ -56,6 +56,25 @@ docker container exec -it llm-ollama-container ollama pull gpt-oss:20b
 docker container exec -it llm-ollama-container ollama pull hf.co/LiquidAI/LFM2.5-1.2B-JP-GGUF:Q8_0
 ```
 
+## MCPサーバ・クライアント
+
+MCPサーバは `src/llm/mcp/server/` に実装し、llm パッケージのスクリプトとして提供する。
+
+```sh
+# MCPサーバを個別起動（stdio transport）
+uv run math-server
+uv run text-server
+uv run filesystem-server
+
+# 接続デモ（fastmcp.Client でサーバに直接接続）
+uv run mcp-demo
+
+# LangGraph agent + MCPサーバ接続デモ
+uv run mcp-langchain
+```
+
+Claude Code / Claude Desktop から利用する場合は `mcp/mcp_config.json` を設定ファイルとして使用する。
+
 ## ディレクトリ構造
 
 ```
@@ -75,8 +94,18 @@ src/llm/
 │       ├── wrap_tool_call/         # ツール呼び出しのモニタリング
 │       └── wrap_model_call/        # モデル呼び出しのモニタリング（実装中）
 ├── chat_models/__init__.py         # モデルプロバイダーの初期化
+├── mcp/
+│   ├── server/
+│   │   ├── math_server.py          # 計算ツール（add, calculate）
+│   │   ├── text_server.py          # テキストツール（word_count）＋コードレビュープロンプト
+│   │   └── filesystem_server.py    # ローカルファイル読み取りリソース
+│   └── client/
+│       ├── fastmcp_client.py       # fastmcp.Client による接続デモ
+│       └── langchain_client.py     # MultiServerMCPClient + LangGraph agent
 └── tools/
     └── internet_search.py          # Google Search APIラッパー
+mcp/
+└── mcp_config.json                 # Claude Code / Claude Desktop 向け設定
 webui/
 └── openwebui/
     └── pipeline/
