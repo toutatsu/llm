@@ -1,9 +1,13 @@
+"""Google検索ツール（直接呼び出し用）。
+
+MCPサーバ経由での利用は `llm.mcp.server.search_server` を参照。
+"""
+
 import os
 from dotenv import load_dotenv
 load_dotenv()
-from typing import Any
 
-from pydantic import BaseModel, Field
+from langchain_core.tools import tool
 from langchain_google_community import GoogleSearchAPIWrapper
 
 from llm.logger import logger
@@ -14,35 +18,21 @@ google = GoogleSearchAPIWrapper(
 )
 
 
-class GoogleSearchRequest(BaseModel):
-    """
-    Request model for performing a Google search.
-    """
-
-    query: str = Field(..., description="The search query string.")
-    num_results: int = Field(5, description="Number of search results to return.")
-
-
-def perform_google_search(request: GoogleSearchRequest) -> list[dict[Any, Any]]:
-    """
-    Perform a Google search using the provided query and number of results.
-    Returns the search results as a string.
+@tool
+def perform_google_search(query: str, num_results: int = 5) -> list[dict]:
+    """Google検索を実行し、結果を返す。
 
     Args:
-        request (GoogleSearchRequest): The search request containing query and num_results.
-    Returns:
-        str: The search results.
+        query: 検索クエリ文字列。
+        num_results: 取得する検索結果の件数（デフォルト: 5）。
     """
-
     try:
-        results = google.results(query=request.query, num_results=request.num_results)
+        return google.results(query=query, num_results=num_results)
     except Exception as e:
         logger.error(e)
-        raise e
-    return results
+        raise
 
 
 if __name__ == "__main__":
-    request = GoogleSearchRequest(query="LangChain documentation", num_results=3)
-    search_results = perform_google_search(request)
-    print(search_results)
+    results = perform_google_search.invoke({"query": "LangChain documentation", "num_results": 3})
+    print(results)

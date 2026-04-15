@@ -9,6 +9,8 @@ from fastmcp import Client
 
 from llm.mcp.server.filesystem_server import mcp as filesystem_mcp
 from llm.mcp.server.math_server import mcp as math_mcp
+from llm.mcp.server.search_server import mcp as search_mcp
+from llm.mcp.server.shell_server import mcp as shell_mcp
 from llm.mcp.server.text_server import mcp as text_mcp
 
 
@@ -41,13 +43,34 @@ async def demo_filesystem_server() -> None:
     print("\n=== filesystem-server ===")
     async with Client(filesystem_mcp) as client:
         resources = await client.list_resources()
+        tools = await client.list_tools()
         print(f"Resources: {[str(r.uri) for r in resources]}")
+        print(f"Tools: {[t.name for t in tools]}")
+
+
+async def demo_search_server() -> None:
+    print("\n=== search-server ===")
+    async with Client(search_mcp) as client:
+        tools = await client.list_tools()
+        print(f"Tools: {[t.name for t in tools]}")
+
+
+async def demo_shell_server() -> None:
+    print("\n=== shell-server ===")
+    async with Client(shell_mcp) as client:
+        tools = await client.list_tools()
+        print(f"Tools: {[t.name for t in tools]}")
+
+        result = await client.call_tool("run_shell", {"command": "echo 'hello from shell-server'"})
+        print(f"run_shell('echo ...') = {result.data}")
 
 
 async def main() -> None:
     await demo_math_server()
     await demo_text_server()
     await demo_filesystem_server()
+    await demo_search_server()
+    await demo_shell_server()
 
 
 if __name__ == "__main__":

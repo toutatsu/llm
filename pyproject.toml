@@ -27,6 +27,8 @@ dependencies = [
 math-server = "llm.mcp.server.math_server:main"
 text-server = "llm.mcp.server.text_server:main"
 filesystem-server = "llm.mcp.server.filesystem_server:main"
+search-server = "llm.mcp.server.search_server:main"
+shell-server = "llm.mcp.server.shell_server:main"
 mcp-demo = "llm.mcp.client.fastmcp_client:main"
 mcp-langchain = "llm.mcp.client.langchain_client:main"
 

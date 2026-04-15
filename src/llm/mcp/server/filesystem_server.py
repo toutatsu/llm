@@ -2,11 +2,16 @@
 
 Resources:
   - file:///{path} : ローカルのテキストファイルを読み取る
+
+Tools:
+  - read_image_as_base64 : ローカルパスまたはURLから画像をbase64エンコードして返す
 """
 
+import base64
 import sys
 from pathlib import Path
 
+import requests
 from fastmcp import FastMCP
 
 mcp = FastMCP("filesystem-server")
@@ -25,6 +30,25 @@ def read_text_file(path: str) -> str:
     if not p.is_file():
         return f"パスはファイルではありません: {path}"
     return p.read_text(encoding="utf-8")
+
+
+@mcp.tool()
+def read_image_as_base64(source: str) -> str:
+    """ローカルパスまたはURLから画像を読み込み、base64エンコードされたデータを返します。
+
+    Args:
+        source: 画像のローカルパスまたはURL。
+    """
+    if source.startswith("http://") or source.startswith("https://"):
+        response = requests.get(source, timeout=30)
+        response.raise_for_status()
+        image_bytes = response.content
+    else:
+        p = Path(source)
+        if not p.exists():
+            return f"ファイルが見つかりません: {source}"
+        image_bytes = p.read_bytes()
+    return base64.b64encode(image_bytes).decode("utf-8")
 
 
 def main() -> None:

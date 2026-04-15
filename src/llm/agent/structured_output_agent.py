@@ -1,19 +1,21 @@
-# https://docs.langchain.com/oss/python/langchain/agents
-# https://docs.langchain.com/oss/python/langchain/structured-output#provider-strategy
+"""構造化出力エージェント。
+
+Pydantic スキーマで検証された出力を生成する LangGraph ReAct エージェント。
+`response_format` に Pydantic モデルを指定することで構造化出力を強制する。
+"""
 
 from pydantic import BaseModel, Field
-from langchain.agents import create_agent
-from langchain.agents.structured_output import ToolStrategy
+from langgraph.prebuilt import create_react_agent
 
 from llm.chat_models import get_chat_model
 
 
 class ContactInfo(BaseModel):
-    """Contact information for a person."""
+    """連絡先情報のスキーマ。"""
 
-    name: str = Field(description="The name of the person")
-    email: str = Field(description="The email address of the person")
-    phone: str = Field(description="The phone number of the person")
+    name: str = Field(description="人物の名前")
+    email: str = Field(description="メールアドレス")
+    phone: str = Field(description="電話番号")
 
 
 STRUCTURED_OUTPUT_AGENT_SYSTEM_PROMPT = """あなたは指定されたフォーマットに従って出力を生成するstructured_output_agentです。
@@ -22,23 +24,17 @@ userから与えられた情報をもとにフォーマットに沿った出力�
 
 
 def get_structured_output_agent():
-    structured_output_agent = create_agent(
+    return create_react_agent(
         model=get_chat_model(),
-        system_prompt=STRUCTURED_OUTPUT_AGENT_SYSTEM_PROMPT,
-        # response_format=ContactInfo,
-        response_format=ToolStrategy(ContactInfo),
+        tools=[],
+        prompt=STRUCTURED_OUTPUT_AGENT_SYSTEM_PROMPT,
+        response_format=ContactInfo,
     )
-    return structured_output_agent
 
 
 if __name__ == "__main__":
-
-    structured_output_agent = get_structured_output_agent()
-    structured_output = structured_output_agent.invoke(
-        input={
-            "messages": [
-                {"role": "user", "content": "generate sample contact information"}
-            ]
-        }
+    agent = get_structured_output_agent()
+    result = agent.invoke(
+        {"messages": [{"role": "user", "content": "サンプルの連絡先情報を生成してください。"}]}
     )
-    print(structured_output)
+    print(result["structured_response"])

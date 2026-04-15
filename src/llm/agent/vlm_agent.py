@@ -1,109 +1,64 @@
-# https://docs.langchain.com/oss/python/langchain/agents
-import base64
-from pathlib import Path
+"""画像解析エージェント。
 
-import requests
-from langchain.agents import create_agent
-
-from llm.chat_models import get_chat_model
-from llm.logger import logger
-
-
-
-def get_base64_from_local_image_path(image_path: str) -> str:
-
-    assert Path(image_path).exists()
-    image_bytes: bytes = open(Path(image_path), "rb").read()
-    return base64.b64encode(image_bytes).decode("utf-8")
-
-def get_base64_from_image_url(url: str) -> str:
-    """
-    Convert an image URL to a base64-encoded string.
-    Args:
-        url (str): The URL of the image.
-    Returns:
-        str: The base64-encoded string of the image.
-    """
-
-    # logger.debug(f"{url}")
-
-    image_bytes = requests.get(url).content
-    return base64.b64encode(image_bytes).decode("utf-8")
-
-def get_image_message(image_list: list[str]):
-    """Get image content as a base64-encoded string."""
-    # https://docs.langchain.com/oss/python/langchain/messages#multimodal
-
-    image_message_list = []
-
-    for image in image_list:
-        # image_message_list.append(
-        #     {"type": "text", "text": f"画像データ: {image}"},
-        # )
-        image_message_list.append(
-            # # from URL
-            # {
-            #     "type": "image",
-            #     "url": image
-            # }
-
-            # from base64 data
-            {
-                "type": "image",
-                "base64": get_base64_from_image_url(image),
-                "mime_type": "image/jpeg",
-            }
-        )
-
-    return image_message_list
-
-
-VLM_AGENT_SYSTEM_PROMPT = """あなたはユーザからの指示に基づいて画像を確認するvlm_agentです。
-必要に応じてツールを実行し、与えられた画像について正確な情報を出力してください。
+filesystem-server MCP の `read_image_as_base64` ツールを使って
+ローカルパスまたはURLから画像を読み込み、内容を確認する LangGraph ReAct エージェント。
+`async with get_vlm_agent() as agent:` で単体利用可能。
+サブエージェントとして使う場合は `create_vlm_agent(tools)` を利用する。
 """
 
-def get_vlm_agent():
-    vlm_agent = create_agent(
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.prebuilt import create_react_agent
+
+from llm.chat_models import get_chat_model
+
+_PROJECT_DIR = str(Path(__file__).parents[3])
+
+_SERVER_CONFIG = {
+    "filesystem-server": {
+        "command": "uv",
+        "args": ["--directory", _PROJECT_DIR, "run", "filesystem-server"],
+        "transport": "stdio",
+    },
+}
+
+VLM_AGENT_SYSTEM_PROMPT = """あなたはユーザからの指示に基づいて画像を確認するvlm_agentです。
+ファイルパスやURLで指定された画像を read_image_as_base64 ツールで読み込み、
+内容について正確な情報を出力してください。
+"""
+
+
+def create_vlm_agent(tools: list):
+    """ツールリストを受け取りエージェントを生成する（サブエージェント用）。"""
+    return create_react_agent(
         model=get_chat_model(
             model_provider="ollama",
             model="ministral-3:14b-cloud",
         ),
-        tools=[get_image_message],
-        system_prompt=VLM_AGENT_SYSTEM_PROMPT,
+        tools=tools,
+        prompt=VLM_AGENT_SYSTEM_PROMPT,
     )
-    return vlm_agent
+
+
+@asynccontextmanager
+async def get_vlm_agent():
+    """filesystem-server に接続し、ツール付きエージェントを yield する。"""
+    async with MultiServerMCPClient(_SERVER_CONFIG) as client:
+        tools = await client.get_tools()
+        yield create_vlm_agent(tools)
 
 
 if __name__ == "__main__":
+    import asyncio
 
-    image_url = ""
+    async def _main():
+        image_path = "/path/to/image.jpg"
+        async with get_vlm_agent() as agent:
+            result = await agent.ainvoke(
+                {"messages": [{"role": "user", "content": f"次の画像を説明してください: {image_path}"}]}
+            )
+            print(result["messages"][-1].content)
 
-    vlm_agent = get_vlm_agent()
-
-    # print(
-    #     vlm_agent.invoke(
-    #         input={
-    #             "messages": [
-    #                 {
-    #                     "role": "user",
-    #                     "content": [
-    #                         {
-    #                             "type": "text",
-    #                             "text": "次の画像を説明して：",
-    #                         },
-    #                         # {
-    #                         #     "type": "image_url",
-    #                         #     "image_url": get_base64_from_image_url(image_url),
-    #                         # },
-    #                         {
-    #                             "type": "image",
-    #                             "source_type": "base64",
-    #                             "mime_type": "image/jpeg",
-    #                             "data": f"{get_base64_from_image_url(image_url)}",
-    #                         },
-    #                     ],
-    #                 }
-    #             ]
-    #         }
-    #     )
-    # )
+    asyncio.run(_main())

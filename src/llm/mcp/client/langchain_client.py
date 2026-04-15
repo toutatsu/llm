@@ -27,6 +27,21 @@ _SERVER_CONFIG = {
         "args": ["--directory", _PROJECT_DIR, "run", "text-server"],
         "transport": "stdio",
     },
+    "search-server": {
+        "command": "uv",
+        "args": ["--directory", _PROJECT_DIR, "run", "search-server"],
+        "transport": "stdio",
+    },
+    "shell-server": {
+        "command": "uv",
+        "args": ["--directory", _PROJECT_DIR, "run", "shell-server"],
+        "transport": "stdio",
+    },
+    "filesystem-server": {
+        "command": "uv",
+        "args": ["--directory", _PROJECT_DIR, "run", "filesystem-server"],
+        "transport": "stdio",
+    },
 }
 
 
@@ -43,6 +58,7 @@ async def main() -> None:
             "3 と 5 を足してください。",
             "math.sqrt(256) を計算してください。",
             "次のテキストの文字数・単語数・行数を教えてください：\nHello world\nfoo bar baz",
+            "echo 'hello from MCP shell' を実行してください。",
         ]
 
         for query in queries:

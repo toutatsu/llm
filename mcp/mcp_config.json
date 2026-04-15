@@ -26,6 +26,24 @@
         "run",
         "filesystem-server"
       ]
+    },
+    "search-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/toutatsu/Desktop/git-repositories/llm",
+        "run",
+        "search-server"
+      ]
+    },
+    "shell-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/toutatsu/Desktop/git-repositories/llm",
+        "run",
+        "shell-server"
+      ]
     }
   }
 }
