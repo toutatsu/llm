@@ -48,9 +48,9 @@ _SERVER_CONFIG = {
 async def main() -> None:
     model = get_chat_model()
 
-    async with MultiServerMCPClient(_SERVER_CONFIG) as client:
-        tools = await client.get_tools()
-        print(f"取得したツール: {[t.name for t in tools]}\n")
+    client = MultiServerMCPClient(_SERVER_CONFIG)
+    tools = await client.get_tools()
+    print(f"取得したツール: {[t.name for t in tools]}\n")
 
         agent = create_react_agent(model, tools)
 

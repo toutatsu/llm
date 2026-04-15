@@ -45,9 +45,9 @@ def create_vlm_agent(tools: list):
 @asynccontextmanager
 async def get_vlm_agent():
     """filesystem-server に接続し、ツール付きエージェントを yield する。"""
-    async with MultiServerMCPClient(_SERVER_CONFIG) as client:
-        tools = await client.get_tools()
-        yield create_vlm_agent(tools)
+    client = MultiServerMCPClient(_SERVER_CONFIG)
+    tools = await client.get_tools()
+    yield create_vlm_agent(tools)
 
 
 if __name__ == "__main__":

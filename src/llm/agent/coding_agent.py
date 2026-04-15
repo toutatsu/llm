@@ -50,9 +50,9 @@ def create_coding_agent(tools: list):
 @asynccontextmanager
 async def get_coding_agent():
     """shell-server / filesystem-server に接続し、ツール付きエージェントを yield する。"""
-    async with MultiServerMCPClient(_SERVER_CONFIG) as client:
-        tools = await client.get_tools()
-        yield create_coding_agent(tools)
+    client = MultiServerMCPClient(_SERVER_CONFIG)
+    tools = await client.get_tools()
+    yield create_coding_agent(tools)
 
 
 if __name__ == "__main__":

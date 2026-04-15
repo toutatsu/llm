@@ -48,7 +48,7 @@ _SERVER_CONFIG = {
 async def get_agent():
     """MCP サーバに接続し、ツール付きエージェントを yield する。"""
     model = get_chat_model()
-    async with MultiServerMCPClient(_SERVER_CONFIG) as client:
-        tools = await client.get_tools()
-        agent = create_react_agent(model, tools)
-        yield agent
+    client = MultiServerMCPClient(_SERVER_CONFIG)
+    tools = await client.get_tools()
+    agent = create_react_agent(model, tools)
+    yield agent
