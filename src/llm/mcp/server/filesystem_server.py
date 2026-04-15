@@ -4,15 +4,15 @@ Resources:
   - file:///{path} : ローカルのテキストファイルを読み取る
 
 Tools:
-  - read_image_as_base64 : ローカルパスまたはURLから画像をbase64エンコードして返す
+  - read_image_as_base64 : ローカルパスまたはURLから画像をImageContentとして返す
 """
 
-import base64
 import sys
 from pathlib import Path
 
 import requests
 from fastmcp import FastMCP
+from fastmcp.utilities.types import Image
 
 from llm.mcp.server._utils import tool_error_handler
 
@@ -37,8 +37,11 @@ def read_text_file(path: str) -> str:
 
 @mcp.tool()
 @tool_error_handler
-def read_image_as_base64(source: str) -> str:
-    """ローカルパスまたはURLから画像を読み込み、base64エンコードされたデータを返します。
+def read_image_as_base64(source: str) -> Image | str:
+    """ローカルパスまたはURLから画像を読み込み、画像データとして返します。
+
+    返却値はMCPのImageContentとしてシリアライズされ、
+    LLMが直接画像として認識できる形式で渡されます。
 
     Args:
         source: 画像のローカルパスまたはURL。
@@ -47,13 +50,14 @@ def read_image_as_base64(source: str) -> str:
         headers = {"User-Agent": "Mozilla/5.0 (compatible; llm-agent/1.0)"}
         response = requests.get(source, timeout=30, headers=headers)
         response.raise_for_status()
-        image_bytes = response.content
+        content_type = response.headers.get("Content-Type", "image/png")
+        mime_format = content_type.split("/")[-1].split(";")[0].strip()
+        return Image(data=response.content, format=mime_format)
     else:
         p = Path(source)
         if not p.exists():
             return f"ファイルが見つかりません: {source}"
-        image_bytes = p.read_bytes()
-    return base64.b64encode(image_bytes).decode("utf-8")
+        return Image(path=p)
 
 
 def main() -> None:
