@@ -44,7 +44,8 @@ def read_image_as_base64(source: str) -> str:
         source: 画像のローカルパスまたはURL。
     """
     if source.startswith("http://") or source.startswith("https://"):
-        response = requests.get(source, timeout=30)
+        headers = {"User-Agent": "Mozilla/5.0 (compatible; llm-agent/1.0)"}
+        response = requests.get(source, timeout=30, headers=headers)
         response.raise_for_status()
         image_bytes = response.content
     else:

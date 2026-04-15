@@ -26,7 +26,17 @@ async def main() -> None:
                     config={"configurable": {"thread_id": datetime_str}},
                     stream_mode=["messages"],
                 ):
-                    chunk = step[1][0].content
+                    content = step[1][0].content
+                    # content はstr（テキスト）またはlist（マルチモーダルブロック）
+                    if isinstance(content, str):
+                        chunk = content
+                    elif isinstance(content, list):
+                        chunk = "".join(
+                            b.get("text", "") if isinstance(b, dict) else str(b)
+                            for b in content
+                        )
+                    else:
+                        chunk = ""
                     if chunk:
                         buffer += chunk
                         live.update(Markdown(buffer))
