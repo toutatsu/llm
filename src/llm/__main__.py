@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 
+from prompt_toolkit import PromptSession
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.live import Live
@@ -14,9 +15,10 @@ datetime_str = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 
 
 async def main() -> None:
+    session: PromptSession = PromptSession()
     async with get_agent() as agent:
         while True:
-            prompt = input("(agent)> ")
+            prompt = await session.prompt_async("(agent)> ")
 
             buffer = ""
 
