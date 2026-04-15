@@ -1,16 +1,16 @@
 """langchain-mcp-adapters を使ったLangGraph agent + MCPサーバ接続のサンプル。
 
-MultiServerMCPClient で math-server / text-server に stdio 接続し、
+open_mcp_tools で永続セッションを維持しながら各サーバに接続し、
 LangGraph の ReAct エージェントからツールを呼び出す。
 """
 
 import asyncio
 from pathlib import Path
 
-from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
 
 from llm.chat_models import get_chat_model
+from llm.mcp.client._utils import open_mcp_tools
 
 # llm パッケージのルートディレクトリ（uv run のディレクトリ指定に使用）
 # __file__ = src/llm/mcp/client/langchain_client.py → parents[4] = プロジェクトルート
@@ -48,9 +48,8 @@ _SERVER_CONFIG = {
 async def main() -> None:
     model = get_chat_model()
 
-    client = MultiServerMCPClient(_SERVER_CONFIG)
-    tools = await client.get_tools()
-    print(f"取得したツール: {[t.name for t in tools]}\n")
+    async with open_mcp_tools(_SERVER_CONFIG) as tools:
+        print(f"取得したツール: {[t.name for t in tools]}\n")
 
         agent = create_react_agent(model, tools)
 

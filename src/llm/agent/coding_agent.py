@@ -9,10 +9,10 @@ LangGraph ReAct エージェント。
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
 
 from llm.chat_models import get_chat_model
+from llm.mcp.client._utils import open_mcp_tools
 
 _PROJECT_DIR = str(Path(__file__).parents[3])
 
@@ -49,10 +49,9 @@ def create_coding_agent(tools: list):
 
 @asynccontextmanager
 async def get_coding_agent():
-    """shell-server / filesystem-server に接続し、ツール付きエージェントを yield する。"""
-    client = MultiServerMCPClient(_SERVER_CONFIG)
-    tools = await client.get_tools()
-    yield create_coding_agent(tools)
+    """shell-server / filesystem-server に永続接続し、ツール付きエージェントを yield する。"""
+    async with open_mcp_tools(_SERVER_CONFIG) as tools:
+        yield create_coding_agent(tools)
 
 
 if __name__ == "__main__":

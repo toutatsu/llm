@@ -12,7 +12,7 @@ from typing import Any
 import psycopg
 from deepagents import create_deep_agent, CompiledSubAgent
 from deepagents.backends import FilesystemBackend
-from langchain_mcp_adapters.client import MultiServerMCPClient
+from llm.mcp.client._utils import open_mcp_tools
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.store.memory import InMemoryStore
 
@@ -157,48 +157,46 @@ async def get_deep_agent():
     checkpointer = PostgresSaver(conn)
     checkpointer.setup()
 
-    mcp_client = MultiServerMCPClient(_ALL_SERVER_CONFIG)
-    all_tools = await mcp_client.get_tools()
-    tool_map = {t.name: t for t in all_tools}
+    async with open_mcp_tools(_ALL_SERVER_CONFIG) as all_tools:
+        tool_map = {t.name: t for t in all_tools}
+        research_tools = [t for name, t in tool_map.items() if name in _RESEARCH_TOOLS]
+        coding_tools = [t for name, t in tool_map.items() if name in _CODING_TOOLS]
+        vlm_tools = [t for name, t in tool_map.items() if name in _VLM_TOOLS]
 
-    research_tools = [t for name, t in tool_map.items() if name in _RESEARCH_TOOLS]
-    coding_tools = [t for name, t in tool_map.items() if name in _CODING_TOOLS]
-    vlm_tools = [t for name, t in tool_map.items() if name in _VLM_TOOLS]
-
-    deep_agent = create_deep_agent(
-        model=get_chat_model(),
-        tools=all_tools,
-        system_prompt=DEEP_AGENT_SYSTEM_PROMPT,
-        middleware=[monitor_tool],
-        subagents=[
-            CompiledSubAgent(
-                name="research_agent",
-                description="情報収集を行うエージェント",
-                runnable=create_research_agent(research_tools),
+        deep_agent = create_deep_agent(
+            model=get_chat_model(),
+            tools=all_tools,
+            system_prompt=DEEP_AGENT_SYSTEM_PROMPT,
+            middleware=[monitor_tool],
+            subagents=[
+                CompiledSubAgent(
+                    name="research_agent",
+                    description="情報収集を行うエージェント",
+                    runnable=create_research_agent(research_tools),
+                ),
+                CompiledSubAgent(
+                    name="vlm_agent",
+                    description="ファイルパスやURLで指定された画像を読み込み、内容の確認を行うエージェント",
+                    runnable=create_vlm_agent(vlm_tools),
+                ),
+                CompiledSubAgent(
+                    name="coding_agent",
+                    description="shellコマンドやプログラムを生成、実行するエージェント",
+                    runnable=create_coding_agent(coding_tools),
+                ),
+            ],
+            checkpointer=checkpointer,
+            store=InMemoryStore(),
+            backend=FilesystemBackend(
+                root_dir="/home/llm/data/agent_filesystem/",
+                virtual_mode=True,
             ),
-            CompiledSubAgent(
-                name="vlm_agent",
-                description="ファイルパスやURLで指定された画像を読み込み、内容の確認を行うエージェント",
-                runnable=create_vlm_agent(vlm_tools),
-            ),
-            CompiledSubAgent(
-                name="coding_agent",
-                description="shellコマンドやプログラムを生成、実行するエージェント",
-                runnable=create_coding_agent(coding_tools),
-            ),
-        ],
-        checkpointer=checkpointer,
-        store=InMemoryStore(),
-        backend=FilesystemBackend(
-            root_dir="/home/llm/data/agent_filesystem/",
-            virtual_mode=True,
-        ),
-        interrupt_on={
-            "read_file": False,
-            "write_file": True,
-        },
-    )
-    yield deep_agent
+            interrupt_on={
+                "read_file": False,
+                "write_file": True,
+            },
+        )
+        yield deep_agent
 
     conn.close()
 
