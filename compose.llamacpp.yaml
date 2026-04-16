@@ -31,13 +31,17 @@ services:
         source: ./models
         target: /models
 
-      # HuggingFace キャッシュをマウントする場合
-      # - type: bind
-      #   source: ~/.cache/huggingface
-      #   target: /root/.cache/huggingface
+      # HuggingFace 自動ダウンロードのキャッシュ（LLAMA_CACHE と対応させる）
+      - type: volume
+        source: llamacpp_hf_cache
+        target: /root/.cache/huggingface
 
     environment:
       - LLAMA_ARG_CTX_SIZE=${LLAMACPP_CTX_SIZE:-2048}
+      # HuggingFace 自動ダウンロード用キャッシュディレクトリ
+      - LLAMA_CACHE=/root/.cache/huggingface
+      # HuggingFace トークン（private リポジトリや rate limit 回避に必要）
+      - HF_TOKEN=${HF_TOKEN:-}
       # GPU 使用時
       # - LLAMA_ARG_N_GPU_LAYERS=99
 
@@ -68,3 +72,6 @@ services:
 
     networks:
       - llm_network
+
+volumes:
+  llamacpp_hf_cache: {}

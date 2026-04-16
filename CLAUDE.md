@@ -138,20 +138,26 @@ wget -P ./models https://huggingface.co/<user>/<repo>/resolve/main/<filename>.gg
 
 ### router mode でのモデル指定
 
-router mode 起動後、`model` フィールドに `--models-dir` からの相対パスまたはHuggingFace repo IDを指定する。
+router mode 起動後、`model` フィールドに `--models-dir` からの相対パスまたは HuggingFace repo ID を指定する。
 
 ```sh
-# ローカルファイルをロード
+# サーバーの疎通確認（/ は存在しないので /health を使う）
+curl http://localhost:8080/health
+
+# ロード済みモデル一覧
+curl http://localhost:8080/models
+
+# ローカルファイルをロード（--models-dir からの相対パス）
 curl http://localhost:8080/v1/chat/completions \
   -d '{"model": "gemma-3-4b-it-Q4_K_M.gguf", "messages": [{"role":"user","content":"hello"}]}'
 
-# HuggingFace から自動ダウンロード＆ロード
+# HuggingFace から自動ダウンロード＆ロード（LLAMA_CACHE にキャッシュされる）
+# .env に HF_TOKEN を設定しておくと private リポジトリや rate limit 回避に有効
 curl http://localhost:8080/v1/chat/completions \
   -d '{"model": "ggml-org/gemma-3-4b-it-GGUF:Q4_K_M", "messages": [{"role":"user","content":"hello"}]}'
-
-# ロード済みモデル一覧
-curl http://localhost:8080/v1/models
 ```
+
+> **注意**: `localhost:8080/` （ルートパス）は存在しないため `{"error":true,...,"reason":"not found"}` が返る。これは正常動作。
 
 ## モデルプロバイダー
 
