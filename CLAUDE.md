@@ -136,28 +136,28 @@ huggingface-cli download ggml-org/gemma-3-4b-it-GGUF --include "*.gguf" --local-
 wget -P ./models https://huggingface.co/<user>/<repo>/resolve/main/<filename>.gguf
 ```
 
-### router mode でのモデル指定
+### router mode でのモデル使用手順
 
-router mode 起動後、`model` フィールドに `--models-dir` からの相対パスまたは HuggingFace repo ID を指定する。
+1. GGUF ファイルを `./models/` に配置する（下記「ダウンロード方法」参照）
+2. `docker compose restart llamacpp` でサーバーを再起動（起動時に `--models-dir` をスキャン）
+3. `model` フィールドに拡張子なしのファイル名を指定してリクエスト
 
 ```sh
 # サーバーの疎通確認（/ は存在しないので /health を使う）
 curl http://localhost:8080/health
 
-# ロード済みモデル一覧
+# 認識済みモデル一覧（再起動後に models/ 内の GGUF が表示される）
 curl http://localhost:8080/models
 
-# ローカルファイルをロード（--models-dir からの相対パス）
+# 推論リクエスト（ファイル名から拡張子 .gguf を除いた名前を指定）
 curl http://localhost:8080/v1/chat/completions \
-  -d '{"model": "gemma-3-4b-it-Q4_K_M.gguf", "messages": [{"role":"user","content":"hello"}]}'
-
-# HuggingFace から自動ダウンロード＆ロード（LLAMA_CACHE にキャッシュされる）
-# .env に HF_TOKEN を設定しておくと private リポジトリや rate limit 回避に有効
-curl http://localhost:8080/v1/chat/completions \
-  -d '{"model": "ggml-org/gemma-3-4b-it-GGUF:Q4_K_M", "messages": [{"role":"user","content":"hello"}]}'
+  -H "Content-Type: application/json" \
+  -d '{"model": "SmolLM2-135M-Instruct-Q2_K", "messages": [{"role":"user","content":"hello"}]}'
 ```
 
-> **注意**: `localhost:8080/` （ルートパス）は存在しないため `{"error":true,...,"reason":"not found"}` が返る。これは正常動作。
+> **注意**:
+> - `localhost:8080/` （ルートパス）は存在しないため `{"error":true,...,"reason":"not found"}` が返る。これは正常動作。
+> - API 経由での HuggingFace 自動ダウンロード（`{"model": "ggml-org/...:Q4_K_M"}`）は**動作しない**。事前にファイルを `./models/` に配置すること。
 
 ## モデルプロバイダー
 
