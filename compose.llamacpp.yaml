@@ -6,9 +6,12 @@ services:
 
     # image: ghcr.io/ggml-org/llama.cpp:full
     image: ghcr.io/ggml-org/llama.cpp:server
+    # image: ghcr.io/ggml-org/llama.cpp:server-cuda   # CUDA 12
+    # image: ghcr.io/ggml-org/llama.cpp:server-rocm   # ROCm
 
     container_name: llm-llamacpp-container
 
+    # GPU (CUDA) 使用時はコメントアウトを解除
     # runtime: nvidia
 
     # deploy:
@@ -19,47 +22,49 @@ services:
     #           capabilities: [ gpu ]
     #           device_ids: [ '0', '1' ]
 
+    # ホスト側ポートは環境変数で変更可能、コンテナ側は常に 8080
     ports:
-      - "${LLAMACPP_SERVER_PORT:-8080}:${LLAMACPP_SERVER_PORT:-8080}"
+      - "${LLAMACPP_SERVER_PORT:-8080}:8080"
 
     volumes:
       - type: bind
         source: ./models
         target: /models
 
+      # HuggingFace キャッシュをマウントする場合
       # - type: bind
       #   source: ~/.cache/huggingface
       #   target: /root/.cache/huggingface
 
-      # environment:
-      # - LLAMA_ARG_CTX_SIZE=2048
-      # - LLAMA_ARG_MODEL=${LLM_MODEL_NAME}
+    environment:
+      - LLAMA_ARG_CTX_SIZE=${LLAMACPP_CTX_SIZE:-2048}
+      # GPU 使用時
       # - LLAMA_ARG_N_GPU_LAYERS=99
 
+    # server イメージのデフォルトエントリポイントは /app/llama-server
     # entrypoint: /app/llama-server
-    entrypoint: [ /bin/bash ]
 
+    # router mode: -m を指定しないことで動的モデルロード/アンロードが有効になる
     command:
-      - -m
-      - ${LLMCPP_MODEL_NAME:-/models/7B/ggml-model-q4_0.gguf}
-
       - --host
       - 0.0.0.0
 
       - --port
-      - ${LLAMACPP_SERVER_PORT:-8080}
+      - "8080"
 
-      # num tokens
-      - -n
-      - "10000"
+      # ローカルモデルの検索ディレクトリ（router mode でのモデルソース）
+      - --models-dir
+      - /models
 
-      # context size
-      - -c
-      - "10000"
+      # 同時ロード上限（デフォルト: 4）
+      # - --models-max
+      # - "2"
 
-      # - -ngl #--n-gpu-layers
+      # - --n-gpu-layers
       # - "100"
-      # - --jinja #	Enable experimental Jinja templating engine (required for tool use)
+
+      # Jinja テンプレート有効化（ツールユース対応）
+      # - --jinja
 
     networks:
       - llm_network

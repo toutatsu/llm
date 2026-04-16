@@ -112,6 +112,47 @@ webui/
         └── deep_agent_pipeline.py  # Open WebUI用パイプライン
 ```
 
+## llama.cpp 用 GGUF モデルの準備
+
+llama.cpp（`compose.llamacpp.yaml`）は `./models/` ディレクトリのGGUFファイルを使用する。
+
+### HuggingFace から直接ダウンロード
+
+```sh
+# huggingface-cli でダウンロード（要: pip install huggingface_hub）
+huggingface-cli download <repo_id> <filename> --local-dir ./models
+
+# 例: Gemma 3 4B Q4_K_M
+huggingface-cli download ggml-org/gemma-3-4b-it-GGUF gemma-3-4b-it-Q4_K_M.gguf --local-dir ./models
+
+# 例: リポジトリ内の全GGUFを取得
+huggingface-cli download ggml-org/gemma-3-4b-it-GGUF --include "*.gguf" --local-dir ./models
+```
+
+### wget / curl でダウンロード
+
+```sh
+# HuggingFace の直接URLからダウンロード
+wget -P ./models https://huggingface.co/<user>/<repo>/resolve/main/<filename>.gguf
+```
+
+### router mode でのモデル指定
+
+router mode 起動後、`model` フィールドに `--models-dir` からの相対パスまたはHuggingFace repo IDを指定する。
+
+```sh
+# ローカルファイルをロード
+curl http://localhost:8080/v1/chat/completions \
+  -d '{"model": "gemma-3-4b-it-Q4_K_M.gguf", "messages": [{"role":"user","content":"hello"}]}'
+
+# HuggingFace から自動ダウンロード＆ロード
+curl http://localhost:8080/v1/chat/completions \
+  -d '{"model": "ggml-org/gemma-3-4b-it-GGUF:Q4_K_M", "messages": [{"role":"user","content":"hello"}]}'
+
+# ロード済みモデル一覧
+curl http://localhost:8080/v1/models
+```
+
 ## モデルプロバイダー
 
 `src/llm/chat_models/__init__.py` の `get_chat_model()` で設定。
