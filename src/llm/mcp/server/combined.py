@@ -1,5 +1,7 @@
 import os
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncIterator
 
 import uvicorn
 from fastapi import FastAPI
@@ -33,13 +35,34 @@ _postgres_proxy = create_proxy(
     }
 )
 
-app = FastAPI(title="MCP Combined Server")
-app.mount("/math", math_mcp.http_app(transport="streamable-http"))
-app.mount("/text", text_mcp.http_app(transport="streamable-http"))
-app.mount("/search", search_mcp.http_app(transport="streamable-http"))
-app.mount("/shell", shell_mcp.http_app(transport="streamable-http"))
-app.mount("/filesystem", filesystem_mcp.http_app(transport="streamable-http"))
-app.mount("/postgres", _postgres_proxy.http_app(transport="streamable-http"))
+_math_app = math_mcp.http_app(transport="streamable-http")
+_text_app = text_mcp.http_app(transport="streamable-http")
+_search_app = search_mcp.http_app(transport="streamable-http")
+_shell_app = shell_mcp.http_app(transport="streamable-http")
+_filesystem_app = filesystem_mcp.http_app(transport="streamable-http")
+_postgres_app = _postgres_proxy.http_app(transport="streamable-http")
+
+_sub_apps = [_math_app, _text_app, _search_app, _shell_app, _filesystem_app, _postgres_app]
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
+    async with _math_app.router.lifespan_context(app):
+        async with _text_app.router.lifespan_context(app):
+            async with _search_app.router.lifespan_context(app):
+                async with _shell_app.router.lifespan_context(app):
+                    async with _filesystem_app.router.lifespan_context(app):
+                        async with _postgres_app.router.lifespan_context(app):
+                            yield
+
+
+app = FastAPI(title="MCP Combined Server", lifespan=_lifespan)
+app.mount("/math", _math_app)
+app.mount("/text", _text_app)
+app.mount("/search", _search_app)
+app.mount("/shell", _shell_app)
+app.mount("/filesystem", _filesystem_app)
+app.mount("/postgres", _postgres_app)
 
 
 def main() -> None:

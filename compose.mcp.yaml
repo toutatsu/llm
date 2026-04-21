@@ -40,3 +40,7 @@ services:
 
 volumes:
   python_venv:
+
+networks:
+  llm_network:
+    driver: bridge

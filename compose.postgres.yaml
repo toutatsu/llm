@@ -30,3 +30,7 @@ services:
       - 58080:8080
     networks:
       - llm_network
+
+networks:
+  llm_network:
+    driver: bridge
