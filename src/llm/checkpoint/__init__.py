@@ -14,22 +14,21 @@ from langgraph.checkpoint.postgres import PostgresSaver
 
 from llm.logger import logger
 
-DB_NAME = "deep_agent_db"
 DB_URI = "postgresql://postgres:example@postgres:5432"
 
 
-def get_postgres_connection() -> psycopg.Connection:
-    """DB が存在しなければ作成し、deep_agent_db への接続を返す。"""
+def get_postgres_connection(db_name: str) -> psycopg.Connection:
+    """DB が存在しなければ作成し、指定した DB への接続を返す。"""
     conn: psycopg.Connection[tuple[Any, ...]] = psycopg.connect(DB_URI, autocommit=True)
     with conn.cursor() as cur:
-        cur.execute("SELECT 1 FROM pg_database WHERE datname=%s;", (DB_NAME,))
+        cur.execute("SELECT 1 FROM pg_database WHERE datname=%s;", (db_name,))
         if not cur.fetchone():
-            cur.execute(f"CREATE DATABASE {DB_NAME};")
-            logger.info(f"データベース '{DB_NAME}' を作成しました。")
+            cur.execute(f"CREATE DATABASE {db_name};")
+            logger.info(f"データベース '{db_name}' を作成しました。")
     conn.close()
 
     return psycopg.connect(
-        f"{DB_URI}/{DB_NAME}",
+        f"{DB_URI}/{db_name}",
         autocommit=True,
         options=(
             "-c tcp_keepalives_idle=60 "
@@ -39,9 +38,9 @@ def get_postgres_connection() -> psycopg.Connection:
     )
 
 
-def create_checkpointer() -> tuple[PostgresSaver, psycopg.Connection]:
+def create_checkpointer(db_name: str) -> tuple[PostgresSaver, psycopg.Connection]:
     """PostgresSaver とその接続を返す。呼び出し元で conn.close() すること。"""
-    conn = get_postgres_connection()
+    conn = get_postgres_connection(db_name)
     checkpointer = PostgresSaver(conn)
     checkpointer.setup()
     return checkpointer, conn

@@ -67,7 +67,7 @@ DEEP_AGENT_SYSTEM_PROMPT = """
 @asynccontextmanager
 async def get_deep_agent():
     """全MCPサーバに接続し、サブエージェント付きのdeep_agentを yield する。"""
-    checkpointer, conn = create_checkpointer()
+    checkpointer, conn = create_checkpointer("deep_agent_db")
     try:
         async with open_mcp_tools(_ALL_SERVER_CONFIG) as all_tools:
             tool_map = {t.name: t for t in all_tools}
@@ -114,4 +114,4 @@ async def get_deep_agent():
 
 
 if __name__ == "__main__":
-    create_checkpoint_blobs_decoded_table(conn=get_postgres_connection())
+    create_checkpoint_blobs_decoded_table(conn=get_postgres_connection("deep_agent_db"))

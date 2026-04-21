@@ -19,7 +19,7 @@ _PROJECT_DIR = str(Path(__file__).parents[3])
 @asynccontextmanager
 async def get_agent():
     """MCP サーバに永続接続し、checkpointer 付きのエージェントを yield する。"""
-    checkpointer, conn = create_checkpointer()
+    checkpointer, conn = create_checkpointer("agent_db")
     try:
         model = get_chat_model()
         async with open_mcp_tools(load_server_config(_PROJECT_DIR)) as tools:
