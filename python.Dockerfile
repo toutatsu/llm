@@ -12,11 +12,11 @@ RUN groupadd --gid ${USER_GID} llm \
 # https://docs.astral.sh/uv/guides/integration/docker/#installing-uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
+USER llm
+
+RUN mkdir -p /home/llm/.venv
+
 WORKDIR /home/llm/
 
 # RUN uv sync
 # RUN uv pip install -e .
-
-# RUN apt-get update --assume-yes && apt-get upgrade --assume-yes
-
-USER llm
