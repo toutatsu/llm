@@ -3,6 +3,7 @@ include:
   - compose.ollama.yaml
   # - compose.vllm.yaml
   - compose.openwebui.yaml
+  - compose.mcp.yaml
   - compose.python.yaml
   - compose.postgres.yaml
 
