@@ -7,7 +7,7 @@ MCP サーバ（math / text）のツールを組み込んだ LangGraph ReAct エ
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 
 from llm.chat_models import get_chat_model
 from llm.mcp.client._utils import open_mcp_tools
@@ -49,4 +49,4 @@ async def get_agent():
     """MCP サーバに永続接続し、ツール付きエージェントを yield する。"""
     model = get_chat_model()
     async with open_mcp_tools(_SERVER_CONFIG) as tools:
-        yield create_react_agent(model, tools)
+        yield create_agent(model, tools)

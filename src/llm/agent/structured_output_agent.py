@@ -5,7 +5,7 @@ Pydantic スキーマで検証された出力を生成する LangGraph ReAct エ
 """
 
 from pydantic import BaseModel, Field
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 
 from llm.chat_models import get_chat_model
 
@@ -24,10 +24,10 @@ userから与えられた情報をもとにフォーマットに沿った出力�
 
 
 def get_structured_output_agent():
-    return create_react_agent(
+    return create_agent(
         model=get_chat_model(),
         tools=[],
-        prompt=STRUCTURED_OUTPUT_AGENT_SYSTEM_PROMPT,
+        system_prompt=STRUCTURED_OUTPUT_AGENT_SYSTEM_PROMPT,
         response_format=ContactInfo,
     )
 

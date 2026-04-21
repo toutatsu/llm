@@ -9,7 +9,7 @@ filesystem-server MCP の `read_image_as_base64` ツールを使って
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 
 from llm.chat_models import get_chat_model
 from llm.mcp.client._utils import open_mcp_tools
@@ -32,13 +32,13 @@ VLM_AGENT_SYSTEM_PROMPT = """あなたはユーザからの指示に基づいて
 
 def create_vlm_agent(tools: list):
     """ツールリストを受け取りエージェントを生成する（サブエージェント用）。"""
-    return create_react_agent(
+    return create_agent(
         model=get_chat_model(
             model_provider="ollama",
             model="ministral-3:14b-cloud",
         ),
         tools=tools,
-        prompt=VLM_AGENT_SYSTEM_PROMPT,
+        system_prompt=VLM_AGENT_SYSTEM_PROMPT,
     )
 
 

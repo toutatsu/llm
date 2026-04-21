@@ -19,7 +19,7 @@ async def open_mcp_tools(server_config: dict[str, Any]):
 
     使用例:
         async with open_mcp_tools(SERVER_CONFIG) as tools:
-            agent = create_react_agent(model, tools)
+            agent = create_agent(model, tools)
             ...
     """
     client = MultiServerMCPClient(server_config)

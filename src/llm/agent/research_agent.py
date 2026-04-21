@@ -8,7 +8,7 @@ search-server MCP のツールを使って情報収集を行う LangGraph ReAct 
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 
 from llm.chat_models import get_chat_model
 from llm.mcp.client._utils import open_mcp_tools
@@ -30,10 +30,10 @@ RESEARCH_AGENT_SYSTEM_PROMPT = """あなたはユーザからの指示に基づ�
 
 def create_research_agent(tools: list):
     """ツールリストを受け取りエージェントを生成する（サブエージェント用）。"""
-    return create_react_agent(
+    return create_agent(
         model=get_chat_model(),
         tools=tools,
-        prompt=RESEARCH_AGENT_SYSTEM_PROMPT,
+        system_prompt=RESEARCH_AGENT_SYSTEM_PROMPT,
     )
 
 

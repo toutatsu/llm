@@ -7,7 +7,7 @@ LangGraph の ReAct エージェントからツールを呼び出す。
 import asyncio
 from pathlib import Path
 
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 
 from llm.chat_models import get_chat_model
 from llm.mcp.client._utils import open_mcp_tools
@@ -51,7 +51,7 @@ async def main() -> None:
     async with open_mcp_tools(_SERVER_CONFIG) as tools:
         print(f"取得したツール: {[t.name for t in tools]}\n")
 
-        agent = create_react_agent(model, tools)
+        agent = create_agent(model, tools)
 
         queries = [
             "3 と 5 を足してください。",

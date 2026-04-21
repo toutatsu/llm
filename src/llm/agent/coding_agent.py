@@ -9,7 +9,7 @@ LangGraph ReAct エージェント。
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 
 from llm.chat_models import get_chat_model
 from llm.mcp.client._utils import open_mcp_tools
@@ -37,13 +37,13 @@ shellコマンドやプログラムを生成し、ツールを通じて実行し
 
 def create_coding_agent(tools: list):
     """ツールリストを受け取りエージェントを生成する（サブエージェント用）。"""
-    return create_react_agent(
+    return create_agent(
         model=get_chat_model(
             model_provider="ollama",
             model="qwen3-coder:480b-cloud",
         ),
         tools=tools,
-        prompt=CODING_AGENT_SYSTEM_PROMPT,
+        system_prompt=CODING_AGENT_SYSTEM_PROMPT,
     )
 
 
