@@ -41,6 +41,15 @@ _SERVER_CONFIG = {
         "args": ["--directory", _PROJECT_DIR, "run", "filesystem-server"],
         "transport": "stdio",
     },
+    "postgres-server": {
+        "command": "uv",
+        "args": [
+            "--directory", _PROJECT_DIR, "run", "postgres-mcp",
+            "postgresql://postgres:example@postgres:5432/deep_agent_db",
+            "--access-mode=unrestricted",
+        ],
+        "transport": "stdio",
+    },
 }
 
 
