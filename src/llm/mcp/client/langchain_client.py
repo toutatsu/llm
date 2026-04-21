@@ -1,26 +1,35 @@
 """langchain-mcp-adapters を使ったLangGraph agent + MCPサーバ接続のサンプル。
 
-open_mcp_tools で永続セッションを維持しながら各サーバに接続し、
+MCP コンテナ（http://mcp:8000）に HTTP で接続し、
 LangGraph の ReAct エージェントからツールを呼び出す。
+MCP_HOST 環境変数でホストを切り替え可能（デフォルト: mcp）。
 """
 
 import asyncio
-from pathlib import Path
+import os
 
 from langchain.agents import create_agent
 
 from llm.chat_models import get_chat_model
-from llm.mcp.client._utils import load_server_config, open_mcp_tools
+from llm.mcp.client._utils import open_mcp_tools
 
-# llm パッケージのルートディレクトリ（uv run のディレクトリ指定に使用）
-# __file__ = src/llm/mcp/client/langchain_client.py → parents[4] = プロジェクトルート
-_PROJECT_DIR = str(Path(__file__).parents[4])
+_MCP_HOST = os.environ.get("MCP_HOST", "mcp")
+_MCP_BASE = f"http://{_MCP_HOST}:8000"
+
+_SERVER_CONFIG = {
+    "math-server":       {"url": f"{_MCP_BASE}/math/mcp",       "transport": "streamable_http"},
+    "text-server":       {"url": f"{_MCP_BASE}/text/mcp",       "transport": "streamable_http"},
+    "search-server":     {"url": f"{_MCP_BASE}/search/mcp",     "transport": "streamable_http"},
+    "shell-server":      {"url": f"{_MCP_BASE}/shell/mcp",      "transport": "streamable_http"},
+    "filesystem-server": {"url": f"{_MCP_BASE}/filesystem/mcp", "transport": "streamable_http"},
+    "postgres-server":   {"url": f"{_MCP_BASE}/postgres/mcp",   "transport": "streamable_http"},
+}
 
 
 async def main() -> None:
     model = get_chat_model()
 
-    async with open_mcp_tools(load_server_config(_PROJECT_DIR)) as tools:
+    async with open_mcp_tools(_SERVER_CONFIG) as tools:
         print(f"取得したツール: {[t.name for t in tools]}\n")
 
         agent = create_agent(model, tools)
