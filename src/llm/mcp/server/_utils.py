@@ -1,17 +1,22 @@
 """MCPサーバ共通ユーティリティ。"""
 
 import functools
+import inspect
 import traceback
+from typing import get_origin
 
 from loguru import logger
 
 
 def tool_error_handler(func):
-    """MCPツール関数をラップし、例外をログに記録してエラー内容を文字列で返すデコレータ。
+    """MCPツール関数をラップし、例外をログに記録してエラー内容を返すデコレータ。
 
     例外が発生した場合、スタックトレースをログ（stderr）に記録したうえで
-    エラー内容を文字列として返す。これによりエージェントがエラーを認識して
-    対処できる。
+    ツールの戻り値の型に合わせたエラー形式を返す。これによりエージェントが
+    エラーを認識して対処できる。
+
+    - list[dict] を返すツール: [{"error": "ErrorType: message"}]
+    - それ以外: "ErrorType: message"
 
     使用例:
         @mcp.tool()
@@ -28,6 +33,12 @@ def tool_error_handler(func):
             logger.error(
                 f"[{func.__name__}] {type(e).__name__}: {e}\n{traceback.format_exc()}"
             )
-            return f"[ERROR] {type(e).__name__}: {e}"
+            error_msg = f"{type(e).__name__}: {e}"
+            return_type = inspect.signature(func).return_annotation
+            if return_type is not inspect.Signature.empty:
+                origin = get_origin(return_type)
+                if origin is list:
+                    return [{"error": error_msg}]
+            return error_msg
 
     return wrapper

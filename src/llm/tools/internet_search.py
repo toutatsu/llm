@@ -30,7 +30,7 @@ def perform_google_search(query: str, num_results: int = 5) -> list[dict]:
         return google.results(query=query, num_results=num_results)
     except Exception as e:
         logger.error(e)
-        raise
+        return [{"error": f"Search failed: {e}"}]
 
 
 if __name__ == "__main__":
