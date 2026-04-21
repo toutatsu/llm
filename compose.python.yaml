@@ -25,6 +25,9 @@ services:
       - type: bind
         source: .
         target: /home/llm
+      - type: volume
+        source: python_venv
+        target: /home/llm/.venv
 
     ports:
       - ${LLM_API_PORT}:${LLM_API_PORT}
@@ -37,3 +40,6 @@ services:
 
     entrypoint: [ "sh", "-c" ]
     command: [ "uv run fastapi run /home/llm/src/llm/api --port $LLM_API_PORT --reload" ]
+
+volumes:
+  python_venv:
