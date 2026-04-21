@@ -1,0 +1,42 @@
+services:
+  mcp:
+    build:
+      context: .
+      dockerfile: python.Dockerfile
+      args:
+        USER_UID: ${HOST_UID:-1000}
+        USER_GID: ${HOST_GID:-1000}
+
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+
+    env_file:
+      - .env
+
+    environment:
+      UV_CACHE_DIR: /tmp/.cache/uv
+      POSTGRES_HOST: postgres
+
+    volumes:
+      - type: bind
+        source: .
+        target: /home/llm
+      - type: volume
+        source: python_venv
+        target: /home/llm/.venv
+      - type: bind
+        source: ./data/agent_filesystem
+        target: /home/llm/data/agent_filesystem
+
+    ports:
+      - "8000:8000"
+
+    networks:
+      - llm_network
+
+    container_name: llm-mcp-container
+
+    entrypoint: ["sh", "-c"]
+    command: ["uv run mcp-server"]
+
+volumes:
+  python_venv:
