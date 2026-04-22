@@ -1,6 +1,6 @@
 """汎用エージェント。
 
-MCP サーバ（math / text）のツールを組み込んだ LangGraph ReAct エージェント。
+全 MCP サーバのツールを組み込んだ LangGraph ReAct エージェント。
 `async with get_agent() as agent:` で使用する。
 """
 
@@ -17,8 +17,12 @@ _MCP_HOST = os.environ.get("MCP_HOST", "mcp")
 _MCP_BASE = f"http://{_MCP_HOST}:8000"
 
 _SERVER_CONFIG = {
-    "math-server": {"url": f"{_MCP_BASE}/math/mcp", "transport": "streamable_http"},
-    "text-server": {"url": f"{_MCP_BASE}/text/mcp", "transport": "streamable_http"},
+    "math-server":       {"url": f"{_MCP_BASE}/math/mcp",       "transport": "streamable_http"},
+    "text-server":       {"url": f"{_MCP_BASE}/text/mcp",       "transport": "streamable_http"},
+    "search-server":     {"url": f"{_MCP_BASE}/search/mcp",     "transport": "streamable_http"},
+    "shell-server":      {"url": f"{_MCP_BASE}/shell/mcp",      "transport": "streamable_http"},
+    "filesystem-server": {"url": f"{_MCP_BASE}/filesystem/mcp", "transport": "streamable_http"},
+    "postgres-server":   {"url": f"{_MCP_BASE}/postgres/mcp",   "transport": "streamable_http"},
 }
 
 
