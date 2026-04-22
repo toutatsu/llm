@@ -33,6 +33,9 @@ def perform_google_search(query: str, num_results: int = 5) -> list[dict]:
         return [{"error": f"Search failed: {e}"}]
 
 
+INTERNET_SEARCH_TOOLS = [perform_google_search]
+
+
 if __name__ == "__main__":
     results = perform_google_search.invoke({"query": "LangChain documentation", "num_results": 3})
     print(results)

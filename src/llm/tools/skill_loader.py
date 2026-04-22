@@ -6,7 +6,9 @@ agentskills.io 仕様（https://agentskills.io/specification）に準拠した�
 Directory structure:
     tools/skills/<skill-name>/
         SKILL.md          # フロントマター（name, description）+ 説明
-        <module>.py       # *_TOOLS リストを持つ Python モジュール
+        <module>.py       # *_TOOLS リストを持つ Python モジュール（スキルルートに置く場合）
+        scripts/          # Optional: *_TOOLS リストを持つ Python モジュール（scripts/ に置く場合）
+            <module>.py
 
 Usage:
     from llm.tools.skill_loader import load_skills, list_skills
@@ -57,17 +59,24 @@ def _parse_skill_md(skill_dir: Path) -> SkillMeta | None:
 
 
 def _load_tools_from_skill(skill_dir: Path) -> list[BaseTool]:
-    """スキルディレクトリ内の Python モジュールから *_TOOLS リストを収集する。"""
+    """スキルディレクトリ内の Python モジュールから *_TOOLS リストを収集する。
+
+    スキルルート直下の *.py と scripts/*.py の両方を探索する。
+    """
     tools: list[BaseTool] = []
-    for py_file in sorted(skill_dir.glob("*.py")):
-        spec = importlib.util.spec_from_file_location(py_file.stem, py_file)
-        if spec is None or spec.loader is None:
+    search_dirs = [skill_dir, skill_dir / "scripts"]
+    for search_dir in search_dirs:
+        if not search_dir.is_dir():
             continue
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        for attr_name in dir(module):
-            if attr_name.endswith("_TOOLS"):
-                tools.extend(getattr(module, attr_name))
+        for py_file in sorted(search_dir.glob("*.py")):
+            spec = importlib.util.spec_from_file_location(py_file.stem, py_file)
+            if spec is None or spec.loader is None:
+                continue
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            for attr_name in dir(module):
+                if attr_name.endswith("_TOOLS"):
+                    tools.extend(getattr(module, attr_name))
     return tools
 
 
