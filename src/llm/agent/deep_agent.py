@@ -19,6 +19,7 @@ from llm.agent.subagent.research_agent import create_research_agent
 from llm.agent.subagent.vlm_agent import create_vlm_agent
 from llm.agent.subagent.coding_agent import create_coding_agent
 from llm.mcp.client._utils import open_mcp_tools
+from llm.tools.skill_loader import load_skills
 from llm.logger import logger
 
 _MCP_HOST = os.environ.get("MCP_HOST", "mcp")
@@ -51,7 +52,9 @@ async def get_deep_agent():
     """全MCPサーバに接続し、サブエージェント付きのdeep_agentを yield する。"""
     checkpointer, conn = create_checkpointer("deep_agent_db")
     try:
-        async with open_mcp_tools(_ALL_SERVER_CONFIG) as all_tools:
+        skill_tools = load_skills()
+        async with open_mcp_tools(_ALL_SERVER_CONFIG) as mcp_tools:
+            all_tools = [*mcp_tools, *skill_tools]
             tool_map = {t.name: t for t in all_tools}
             research_tools = [t for name, t in tool_map.items() if name in _RESEARCH_TOOLS]
             coding_tools = [t for name, t in tool_map.items() if name in _CODING_TOOLS]
