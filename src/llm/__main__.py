@@ -49,6 +49,11 @@ async def main() -> None:
                             live.update(Markdown(buffer))
             except KeyboardInterrupt:
                 console.print("\n[dim]中断しました[/dim]")
+            except Exception as e:
+                root = e
+                while isinstance(root, BaseExceptionGroup) and root.exceptions:
+                    root = root.exceptions[0]
+                console.print(f"[red]エラー: {type(root).__name__}: {root}[/red]")
 
 
 if __name__ == "__main__":
