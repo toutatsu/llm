@@ -7,13 +7,13 @@ Tools:
   - read_image_as_base64 : ローカルパスまたはURLから画像をImageContentとして返す
 """
 
+import base64
 import sys
 from io import BytesIO
 from pathlib import Path
 
 import requests
 from fastmcp import FastMCP
-from fastmcp.utilities.types import Image
 from PIL import Image as PILImage
 
 from llm.mcp.server._utils import tool_error_handler
@@ -55,11 +55,11 @@ def read_text_file(path: str) -> str:
 
 @mcp.tool()
 @tool_error_handler
-def read_image_as_base64(source: str) -> Image | str:
-    """ローカルパスまたはURLから画像を読み込み、画像データとして返します。
+def read_image_as_base64(source: str) -> str:
+    """ローカルパスまたはURLから画像を読み込み、data URI として返します。
 
-    返却値はMCPのImageContentとしてシリアライズされ、
-    LLMが直接画像として認識できる形式で渡されます。
+    返却値は "data:image/<fmt>;base64,<data>" 形式の文字列です。
+    マルチモーダルモデルはこの data URI を画像として認識できます。
 
     Args:
         source: 画像のローカルパスまたはURL。
@@ -73,13 +73,15 @@ def read_image_as_base64(source: str) -> Image | str:
             return f"URLが画像を返しませんでした (Content-Type: {content_type!r})"
         mime_format = content_type.split("/")[1].split(";")[0].strip()
         mime_format = {"jpg": "jpeg", "tif": "tiff"}.get(mime_format, mime_format)
-        return Image(data=_resize(response.content, mime_format), format=mime_format)
+        data = _resize(response.content, mime_format)
     else:
         p = Path(source)
         if not p.exists():
             return f"ファイルが見つかりません: {source}"
-        data = _resize(p.read_bytes(), p.suffix.lstrip(".").lower())
-        return Image(data=data, format=p.suffix.lstrip(".").lower())
+        mime_format = p.suffix.lstrip(".").lower()
+        mime_format = {"jpg": "jpeg", "tif": "tiff"}.get(mime_format, mime_format)
+        data = _resize(p.read_bytes(), mime_format)
+    return f"data:image/{mime_format};base64,{base64.b64encode(data).decode()}"
 
 
 def main() -> None:
