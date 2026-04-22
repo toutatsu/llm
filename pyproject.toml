@@ -23,6 +23,7 @@ dependencies = [
     "uvicorn>=0.35.0",
     "prompt-toolkit>=3.0.52",
     "postgres-mcp>=0.3.0",
+    "pillow>=11.0.0",
 ]
 
 [project.scripts]

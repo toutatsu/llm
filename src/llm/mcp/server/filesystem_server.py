@@ -8,15 +8,33 @@ Tools:
 """
 
 import sys
+from io import BytesIO
 from pathlib import Path
 
 import requests
 from fastmcp import FastMCP
 from fastmcp.utilities.types import Image
+from PIL import Image as PILImage
 
 from llm.mcp.server._utils import tool_error_handler
 
 mcp = FastMCP("filesystem-server")
+
+_MAX_SIZE = (768, 768)
+
+
+def _resize(data: bytes, fmt: str) -> bytes:
+    """画像を _MAX_SIZE に収まるようリサイズして返す。すでに小さければそのまま返す。"""
+    pil_fmt = "JPEG" if fmt.lower() in ("jpg", "jpeg") else fmt.upper()
+    img = PILImage.open(BytesIO(data))
+    if img.width <= _MAX_SIZE[0] and img.height <= _MAX_SIZE[1]:
+        return data
+    img.thumbnail(_MAX_SIZE, PILImage.LANCZOS)
+    if img.mode not in ("RGB", "L") and pil_fmt == "JPEG":
+        img = img.convert("RGB")
+    buf = BytesIO()
+    img.save(buf, format=pil_fmt)
+    return buf.getvalue()
 
 
 @mcp.resource("file:///{path}")
@@ -55,12 +73,13 @@ def read_image_as_base64(source: str) -> Image | str:
             return f"URLが画像を返しませんでした (Content-Type: {content_type!r})"
         mime_format = content_type.split("/")[1].split(";")[0].strip()
         mime_format = {"jpg": "jpeg", "tif": "tiff"}.get(mime_format, mime_format)
-        return Image(data=response.content, format=mime_format)
+        return Image(data=_resize(response.content, mime_format), format=mime_format)
     else:
         p = Path(source)
         if not p.exists():
             return f"ファイルが見つかりません: {source}"
-        return Image(path=p)
+        data = _resize(p.read_bytes(), p.suffix.lstrip(".").lower())
+        return Image(data=data, format=p.suffix.lstrip(".").lower())
 
 
 def main() -> None:
