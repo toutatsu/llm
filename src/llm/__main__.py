@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 from datetime import datetime
 
@@ -14,9 +15,9 @@ console = Console()
 datetime_str = datetime.now().strftime("%Y-%m-%dT%H%M%S")
 
 
-async def main() -> None:
+async def main(verbose: bool = False) -> None:
     session: PromptSession = PromptSession()
-    async with get_agent() as agent:
+    async with get_agent(verbose=verbose) as agent:
         while True:
             try:
                 prompt = await session.prompt_async("(agent)> ")
@@ -57,4 +58,11 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description="LLM Agent CLI")
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="ツール呼び出しの名前・引数・結果を表示する",
+    )
+    args = parser.parse_args()
+    asyncio.run(main(verbose=args.verbose))

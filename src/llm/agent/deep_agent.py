@@ -3,6 +3,7 @@
 deepagents の create_deep_agent でサブエージェントを統括する。
 全MCPサーバのツールを取得し、サブエージェントに適切に割り当てる。
 `async with get_deep_agent() as agent:` で利用する。
+`async with get_deep_agent(verbose=True) as agent:` でツール呼び出しの詳細を表示する。
 """
 
 import os
@@ -48,8 +49,12 @@ DEEP_AGENT_SYSTEM_PROMPT = """
 
 
 @asynccontextmanager
-async def get_deep_agent():
-    """全MCPサーバに接続し、サブエージェント付きのdeep_agentを yield する。"""
+async def get_deep_agent(*, verbose: bool = False):
+    """全MCPサーバに接続し、サブエージェント付きのdeep_agentを yield する。
+
+    Args:
+        verbose: True のとき、ツール呼び出しの名前・引数・結果を標準エラーに表示する。
+    """
     checkpointer, conn = create_checkpointer("deep_agent_db")
     try:
         skill_tools = load_skills()
@@ -60,11 +65,12 @@ async def get_deep_agent():
             coding_tools = [t for name, t in tool_map.items() if name in _CODING_TOOLS]
             vlm_tools = [t for name, t in tool_map.items() if name in _VLM_TOOLS]
 
+            middleware = [monitor_tool] if verbose else []
             deep_agent = create_deep_agent(
                 model=get_chat_model(),
                 tools=all_tools,
                 system_prompt=DEEP_AGENT_SYSTEM_PROMPT,
-                middleware=[monitor_tool],
+                middleware=middleware,
                 subagents=[
                     CompiledSubAgent(
                         name="research_agent",
