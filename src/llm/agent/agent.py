@@ -7,7 +7,10 @@
 
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
+from deepagents.backends import FilesystemBackend
+from deepagents.middleware.skills import SkillsMiddleware
 from langchain.agents import create_agent
 
 from llm.agent.middleware.wrap_tool_call import monitor_tool
@@ -28,6 +31,15 @@ _SERVER_CONFIG = {
     "postgres-server":   {"url": f"{_MCP_BASE}/postgres/mcp",   "transport": "streamable_http"},
 }
 
+_SKILLS_DIR = Path(__file__).parent.parent / "tools" / "skills"
+
+
+def _build_skills_middleware() -> SkillsMiddleware:
+    return SkillsMiddleware(
+        backend=FilesystemBackend(root_dir=str(_SKILLS_DIR)),
+        sources=["/"],
+    )
+
 
 @asynccontextmanager
 async def get_agent(*, verbose: bool = False):
@@ -38,7 +50,9 @@ async def get_agent(*, verbose: bool = False):
     """
     model = get_chat_model()
     skill_tools = load_skills()
-    middleware = [monitor_tool] if verbose else []
+    middleware = [_build_skills_middleware()]
+    if verbose:
+        middleware.append(monitor_tool)
     async with create_async_checkpointer("agent_db") as checkpointer:
         async with open_mcp_tools(_SERVER_CONFIG) as mcp_tools:
             yield create_agent(

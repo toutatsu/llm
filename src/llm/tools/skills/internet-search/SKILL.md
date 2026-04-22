@@ -6,16 +6,39 @@ compatibility: Requires GOOGLE_API_KEY and GOOGLE_CSE_ID environment variables.
 
 # Internet Search
 
-Google Custom Search API を使った Web 検索ツール。
+Google Custom Search API を使った Web 検索スキル。
 MCP サーバ経由ではなく LangChain ツールとして直接利用する場合に使用する。
+
+## When to Use
+
+- ユーザーが最新の情報や Web 上の情報を調べたいとき
+- 特定のトピックをリサーチするとき
+- ニュース・価格・イベント等の現在の情報が必要なとき
 
 ## Available Tools
 
-| Tool | Description |
-|------|-------------|
-| `perform_google_search` | Google 検索を実行し、タイトル・URL・スニペットを返す |
+以下のツールはエージェントに登録済みで、直接呼び出せる。
 
-## Usage Notes
+| Tool | 引数 | 説明 |
+|------|------|------|
+| `perform_google_search` | `query`, `num_results` (省略可、デフォルト 5) | Google 検索を実行し、タイトル・URL・スニペットの一覧を返す |
 
-- `.env` に `GOOGLE_API_KEY` と `GOOGLE_CSE_ID` が必要
-- MCP 経由の検索は `llm.mcp.server.search_server` を参照
+環境変数 `GOOGLE_API_KEY` と `GOOGLE_CSE_ID` が必要。
+MCP 経由の検索が使える場合は `google_search` (search-server) を優先すること。
+
+## Instructions
+
+1. ユーザーの質問から適切な検索クエリを生成する（日本語または英語）
+2. `perform_google_search` を呼び出す
+3. 返却された結果（タイトル・URL・スニペット）から関連情報を抽出する
+4. 情報を整理してユーザーに要約で回答する。必要に応じて URL を引用する
+
+## Examples
+
+```
+ユーザー: 「LangGraph の最新バージョンを調べて」
+→ perform_google_search(query="LangGraph latest version 2025") を呼び出す
+
+ユーザー: 「東京の今週の天気は？」
+→ perform_google_search(query="東京 天気 今週", num_results=3) を呼び出す
+```

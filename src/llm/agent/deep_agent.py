@@ -8,9 +8,11 @@ deepagents の create_deep_agent でサブエージェントを統括する。
 
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from deepagents import create_deep_agent, CompiledSubAgent
 from deepagents.backends import FilesystemBackend
+from deepagents.middleware.skills import SkillsMiddleware
 from langgraph.store.memory import InMemoryStore
 
 from llm.chat_models import get_chat_model
@@ -40,12 +42,21 @@ _RESEARCH_TOOLS = {"google_search"}
 _CODING_TOOLS = {"run_shell", "read_text_file", "read_image_as_base64"}
 _VLM_TOOLS = {"read_image_as_base64"}
 
+_SKILLS_DIR = Path(__file__).parent.parent / "tools" / "skills"
+
 DEEP_AGENT_SYSTEM_PROMPT = """
 あなたはユーザからの指示に基づき回答を行うdeep_agentです
 外部の情報が必要な場合、toolやsubagentsを利用して情報を取得してください
 
 回答は日本語で行ってください
 """
+
+
+def _build_skills_middleware() -> SkillsMiddleware:
+    return SkillsMiddleware(
+        backend=FilesystemBackend(root_dir=str(_SKILLS_DIR)),
+        sources=["/"],
+    )
 
 
 @asynccontextmanager
@@ -65,7 +76,9 @@ async def get_deep_agent(*, verbose: bool = False):
             coding_tools = [t for name, t in tool_map.items() if name in _CODING_TOOLS]
             vlm_tools = [t for name, t in tool_map.items() if name in _VLM_TOOLS]
 
-            middleware = [monitor_tool] if verbose else []
+            middleware = [_build_skills_middleware()]
+            if verbose:
+                middleware.append(monitor_tool)
             deep_agent = create_deep_agent(
                 model=get_chat_model(),
                 tools=all_tools,
