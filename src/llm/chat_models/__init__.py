@@ -20,7 +20,8 @@ def get_chat_model(
     # ollama Cloud models
     # https://ollama.com/blog/cloud-models
     model = model
-    # model = "ministral-3:14b-cloud"
+
+    model = "gemma4:31b-cloud"
     model_provider = "ollama"
     kwargs = {
         "base_url": "https://ollama.com",
@@ -28,7 +29,7 @@ def get_chat_model(
     }
 
     # # google genai
-    # model="gemini-2.5-flash"
+    # model="gemini-4-flash"
     # model_provider="google_genai"
     # kwargs = {}
 

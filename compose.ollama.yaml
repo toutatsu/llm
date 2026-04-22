@@ -16,6 +16,21 @@ services:
     networks:
       - llm_network
 
+    # deploy:
+    #   resources:
+        # reservations:
+        #   devices:
+        #     - driver: nvidia
+        #       capabilities: [ 'gpu' ]
+        #       device_ids: [ '0' ]
+
+    # healthcheck:
+    #   test: [ "CMD", "bash", "-c", "nvidia-smi > /dev/null 2>&1" ]
+    #   interval: 1m30s
+    #   timeout: 3s
+    #   retries: 3
+    #   start_period: 30s
+
     # pull_policy: always
     # restart: unless-stopped
 
