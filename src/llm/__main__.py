@@ -18,30 +18,37 @@ async def main() -> None:
     session: PromptSession = PromptSession()
     async with get_agent() as agent:
         while True:
-            prompt = await session.prompt_async("(agent)> ")
+            try:
+                prompt = await session.prompt_async("(agent)> ")
+            except (KeyboardInterrupt, EOFError):
+                console.print("\n[dim]終了します[/dim]")
+                break
 
             buffer = ""
 
-            with Live("", console=console, refresh_per_second=10) as live:
-                async for step in agent.astream(
-                    input={"messages": [{"role": "user", "content": prompt}]},
-                    config={"configurable": {"thread_id": datetime_str}},
-                    stream_mode=["messages"],
-                ):
-                    content = step[1][0].content
-                    # content はstr（テキスト）またはlist（マルチモーダルブロック）
-                    if isinstance(content, str):
-                        chunk = content
-                    elif isinstance(content, list):
-                        chunk = "".join(
-                            b.get("text", "") if isinstance(b, dict) else str(b)
-                            for b in content
-                        )
-                    else:
-                        chunk = ""
-                    if chunk:
-                        buffer += chunk
-                        live.update(Markdown(buffer))
+            try:
+                with Live("", console=console, refresh_per_second=10, vertical_overflow="visible") as live:
+                    async for step in agent.astream(
+                        input={"messages": [{"role": "user", "content": prompt}]},
+                        config={"configurable": {"thread_id": datetime_str}},
+                        stream_mode=["messages"],
+                    ):
+                        content = step[1][0].content
+                        # content はstr（テキスト）またはlist（マルチモーダルブロック）
+                        if isinstance(content, str):
+                            chunk = content
+                        elif isinstance(content, list):
+                            chunk = "".join(
+                                b.get("text", "") if isinstance(b, dict) else str(b)
+                                for b in content
+                            )
+                        else:
+                            chunk = ""
+                        if chunk:
+                            buffer += chunk
+                            live.update(Markdown(buffer))
+            except KeyboardInterrupt:
+                console.print("\n[dim]中断しました[/dim]")
 
 
 if __name__ == "__main__":
