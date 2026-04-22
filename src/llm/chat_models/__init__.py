@@ -1,45 +1,26 @@
+import os
+
 from langchain.chat_models import init_chat_model
 
+_LLM_MODEL = os.environ.get("LLM_MODEL", "qwen3.5:35b-cloud")
+_LLM_PROVIDER = os.environ.get("LLM_MODEL_PROVIDER", "ollama")
+_VLM_MODEL = os.environ.get("VLM_MODEL", "gemma4:27b-cloud")
+_VLM_PROVIDER = os.environ.get("VLM_MODEL_PROVIDER", "ollama")
 
-def get_chat_model(
-        model_provider="ollama",
-        model="gpt-oss:20b-cloud"
-    ):
 
-    # https://reference.langchain.com/python/langchain/models/#langchain.chat_models.init_chat_model
-
-    # # local ollama
-    # model="gemma3:1b"
-    # model_provider="openai"
-    # kwargs = {
-    #     "base_url": "http://ollama:11434/v1",
-    #     "verbose":True,
-    #     "api_key":"dummy",
-    # }
-
-    # ollama Cloud models
-    # https://ollama.com/blog/cloud-models
-    model = model
-
-    model = "gemma4:31b-cloud"
-    model_provider = "ollama"
+def get_chat_model(model: str | None = None, model_provider: str | None = None):
+    model = model or _LLM_MODEL
+    model_provider = model_provider or _LLM_PROVIDER
     kwargs = {
         "base_url": "https://ollama.com",
         "verbose": True,
     }
+    return init_chat_model(model=model, model_provider=model_provider, **kwargs)
 
-    # # google genai
-    # model="gemini-4-flash"
-    # model_provider="google_genai"
-    # kwargs = {}
 
-    chat_model = init_chat_model(
-        model=model,
-        model_provider=model_provider,
-        **kwargs,
-    )
-
-    return chat_model
+def get_vlm_chat_model():
+    """VLM_MODEL / VLM_MODEL_PROVIDER 環境変数で指定されたビジョン対応モデルを返す。"""
+    return get_chat_model(model=_VLM_MODEL, model_provider=_VLM_PROVIDER)
 
 
 if __name__ == "__main__":

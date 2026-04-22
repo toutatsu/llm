@@ -12,7 +12,7 @@ from pathlib import Path
 from langchain.agents import create_agent
 from langchain_core.tools import BaseTool, tool
 
-from llm.chat_models import get_chat_model
+from llm.chat_models import get_vlm_chat_model
 from llm.mcp.client._utils import open_mcp_tools
 
 _PROJECT_DIR = str(Path(__file__).parents[4])
@@ -25,27 +25,30 @@ _SERVER_CONFIG = {
     },
 }
 
-SYSTEM_PROMPT = """あなたはユーザからの指示に基づいて画像を確認するvlm_agentです。
-ファイルパスやURLで指定された画像を read_image_as_base64 ツールで読み込み、
-内容について正確な情報を出力してください。
+SYSTEM_PROMPT = """あなたは画像を解析してテキストで説明する vlm_agent です。
+read_image_as_base64 で画像を読み込み、内容（概要・オブジェクト・テキスト・色）を日本語で説明してください。
+返答はテキストのみ。
 """
 
 
-def create_vlm_agent(tools: list):
-    """ツールリストを受け取りエージェントを生成する（サブエージェント用）。"""
+def create_vlm_agent(tools: list, skill_tools: list | None = None):
+    """ツールリストを受け取りエージェントを生成する（サブエージェント用）。
+
+    Args:
+        tools: MCPサーバ由来のツール（read_image_as_base64 など）
+        skill_tools: スキルローダー由来の追加ツール（get_image_metadata など）
+    """
+    all_tools = [*tools, *(skill_tools or [])]
     return create_agent(
-        model=get_chat_model(
-            model_provider="ollama",
-            model="ministral-3:14b-cloud",
-        ),
-        tools=tools,
+        model=get_vlm_chat_model(),
+        tools=all_tools,
         system_prompt=SYSTEM_PROMPT,
     )
 
 
-def as_tool(tools: list) -> BaseTool:
+def as_tool(tools: list, skill_tools: list | None = None) -> BaseTool:
     """エージェントを LangChain ツールとしてラップする。"""
-    agent = create_vlm_agent(tools)
+    agent = create_vlm_agent(tools, skill_tools=skill_tools)
 
     @tool
     async def vlm_agent(question: str) -> str:
@@ -59,10 +62,10 @@ def as_tool(tools: list) -> BaseTool:
 
 
 @asynccontextmanager
-async def get_vlm_agent():
+async def get_vlm_agent(skill_tools: list | None = None):
     """filesystem-server に永続接続し、ツール付きエージェントを yield する。"""
     async with open_mcp_tools(_SERVER_CONFIG) as tools:
-        yield create_vlm_agent(tools)
+        yield create_vlm_agent(tools, skill_tools=skill_tools)
 
 
 if __name__ == "__main__":

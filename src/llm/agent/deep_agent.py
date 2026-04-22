@@ -42,11 +42,20 @@ _RESEARCH_TOOLS = {"google_search"}
 _CODING_TOOLS = {"run_shell", "read_text_file", "read_image_as_base64"}
 _VLM_TOOLS = {"read_image_as_base64"}
 
+# deep_agent 自身には渡さないツール（サブエージェント専用）
+# read_image_as_base64 を直接呼ぶと生の画像データが deep_agent のコンテキストに蓄積されるため
+_DEEP_AGENT_EXCLUDED_TOOLS = {"read_image_as_base64"}
+
 _SKILLS_DIR = Path(__file__).parent.parent / "tools" / "skills"
+_VLM_SKILL_NAME = "image-analysis"
 
 DEEP_AGENT_SYSTEM_PROMPT = """
 あなたはユーザからの指示に基づき回答を行うdeep_agentです
 外部の情報が必要な場合、toolやsubagentsを利用して情報を取得してください
+
+## 画像解析について
+画像の内容確認・説明が必要な場合は必ず vlm_agent に委譲してください。
+自分で read_image_as_base64 を呼ばないでください（コンテキスト肥大化の原因になります）。
 
 回答は日本語で行ってください
 """
@@ -69,19 +78,24 @@ async def get_deep_agent(*, verbose: bool = False):
     checkpointer, conn = create_checkpointer("deep_agent_db")
     try:
         skill_tools = load_skills()
+        vlm_skill_tools = load_skills(_VLM_SKILL_NAME)
         async with open_mcp_tools(_ALL_SERVER_CONFIG) as mcp_tools:
             all_tools = [*mcp_tools, *skill_tools]
             tool_map = {t.name: t for t in all_tools}
             research_tools = [t for name, t in tool_map.items() if name in _RESEARCH_TOOLS]
             coding_tools = [t for name, t in tool_map.items() if name in _CODING_TOOLS]
             vlm_tools = [t for name, t in tool_map.items() if name in _VLM_TOOLS]
+            deep_agent_tools = [
+                t for name, t in tool_map.items()
+                if name not in _DEEP_AGENT_EXCLUDED_TOOLS
+            ]
 
             middleware = [_build_skills_middleware()]
             if verbose:
                 middleware.append(monitor_tool)
             deep_agent = create_deep_agent(
                 model=get_chat_model(),
-                tools=all_tools,
+                tools=deep_agent_tools,
                 system_prompt=DEEP_AGENT_SYSTEM_PROMPT,
                 middleware=middleware,
                 subagents=[
@@ -93,7 +107,7 @@ async def get_deep_agent(*, verbose: bool = False):
                     CompiledSubAgent(
                         name="vlm_agent",
                         description="ファイルパスやURLで指定された画像を読み込み、内容の確認を行うエージェント",
-                        runnable=create_vlm_agent(vlm_tools),
+                        runnable=create_vlm_agent(vlm_tools, skill_tools=vlm_skill_tools),
                     ),
                     CompiledSubAgent(
                         name="coding_agent",

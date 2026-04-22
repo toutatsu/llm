@@ -14,6 +14,7 @@ from deepagents.middleware.skills import SkillsMiddleware
 from langchain.agents import create_agent
 
 from llm.agent.middleware.wrap_tool_call import monitor_tool
+from llm.agent.subagent.vlm_agent import as_tool as vlm_as_tool
 from llm.chat_models import get_chat_model
 from llm.checkpoint import create_async_checkpointer
 from llm.mcp.client._utils import open_mcp_tools
@@ -33,6 +34,11 @@ _SERVER_CONFIG = {
 
 _SKILLS_DIR = Path(__file__).parent.parent / "tools" / "skills"
 
+# agent 自身には渡さないツール（vlm_agent 経由で使わせる）
+_AGENT_EXCLUDED_TOOLS = {"read_image_as_base64"}
+_VLM_TOOLS = {"read_image_as_base64"}
+_VLM_SKILL_NAME = "image-analysis"
+
 
 def _build_skills_middleware() -> SkillsMiddleware:
     return SkillsMiddleware(
@@ -50,14 +56,21 @@ async def get_agent(*, verbose: bool = False):
     """
     model = get_chat_model()
     skill_tools = load_skills()
+    vlm_skill_tools = load_skills(_VLM_SKILL_NAME)
     middleware = [_build_skills_middleware()]
     if verbose:
         middleware.append(monitor_tool)
     async with create_async_checkpointer("agent_db") as checkpointer:
         async with open_mcp_tools(_SERVER_CONFIG) as mcp_tools:
+            tool_map = {t.name: t for t in [*mcp_tools, *skill_tools]}
+            vlm_mcp_tools = [t for name, t in tool_map.items() if name in _VLM_TOOLS]
+            agent_tools = [
+                t for name, t in tool_map.items()
+                if name not in _AGENT_EXCLUDED_TOOLS
+            ] + [vlm_as_tool(vlm_mcp_tools, skill_tools=vlm_skill_tools)]
             yield create_agent(
                 model,
-                [*mcp_tools, *skill_tools],
+                agent_tools,
                 middleware=middleware,
                 checkpointer=checkpointer,
             )
