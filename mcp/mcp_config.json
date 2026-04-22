@@ -45,11 +45,19 @@
         "shell-server"
       ]
     },
-    "postgres-server": {
+    "postgres-deep-agent": {
       "command": "uvx",
       "args": [
         "postgres-mcp",
         "postgresql://postgres:example@localhost:5432/deep_agent_db",
+        "--access-mode=unrestricted"
+      ]
+    },
+    "postgres-agent": {
+      "command": "uvx",
+      "args": [
+        "postgres-mcp",
+        "postgresql://postgres:example@localhost:5432/agent_db",
         "--access-mode=unrestricted"
       ]
     }
