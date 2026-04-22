@@ -50,8 +50,11 @@ def read_image_as_base64(source: str) -> Image | str:
         headers = {"User-Agent": "Mozilla/5.0 (compatible; llm-agent/1.0)"}
         response = requests.get(source, timeout=30, headers=headers)
         response.raise_for_status()
-        content_type = response.headers.get("Content-Type", "image/png")
-        mime_format = content_type.split("/")[-1].split(";")[0].strip()
+        content_type = response.headers.get("Content-Type", "")
+        if not content_type.startswith("image/"):
+            return f"URLが画像を返しませんでした (Content-Type: {content_type!r})"
+        mime_format = content_type.split("/")[1].split(";")[0].strip()
+        mime_format = {"jpg": "jpeg", "tif": "tiff"}.get(mime_format, mime_format)
         return Image(data=response.content, format=mime_format)
     else:
         p = Path(source)
