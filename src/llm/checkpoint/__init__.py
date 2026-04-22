@@ -5,12 +5,14 @@ DB接続・PostgresSaver の生成・デバッグ用テーブル作成を提供�
 """
 
 import json
-from typing import Any
+from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator
 
 import msgpack
 import psycopg
 from langchain_core.load import load
 from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from llm.logger import logger
 
@@ -44,6 +46,19 @@ def create_checkpointer(db_name: str) -> tuple[PostgresSaver, psycopg.Connection
     checkpointer = PostgresSaver(conn)
     checkpointer.setup()
     return checkpointer, conn
+
+
+@asynccontextmanager
+async def create_async_checkpointer(db_name: str) -> AsyncIterator[AsyncPostgresSaver]:
+    """AsyncPostgresSaver を yield する。非同期エージェントで使用する。"""
+    get_postgres_connection(db_name)
+    conn_string = f"{DB_URI}/{db_name}"
+    async with await psycopg.AsyncConnection.connect(
+        conn_string, autocommit=True
+    ) as conn:
+        checkpointer = AsyncPostgresSaver(conn)
+        await checkpointer.setup()
+        yield checkpointer
 
 
 def create_checkpoint_blobs_decoded_table(conn: psycopg.Connection[tuple[Any, ...]]):
