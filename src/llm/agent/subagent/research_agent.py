@@ -2,18 +2,19 @@
 
 search-server MCP のツールを使って情報収集を行う LangGraph ReAct エージェント。
 `async with get_research_agent() as agent:` で単体利用可能。
-サブエージェントとして使う場合は `create_research_agent(tools)` を利用する。
+`as_tool(tools)` で LangChain ツールとして利用可能。
 """
 
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from langchain.agents import create_agent
+from langchain_core.tools import BaseTool, tool
 
 from llm.chat_models import get_chat_model
 from llm.mcp.client._utils import open_mcp_tools
 
-_PROJECT_DIR = str(Path(__file__).parents[3])
+_PROJECT_DIR = str(Path(__file__).parents[4])
 
 _SERVER_CONFIG = {
     "search-server": {
@@ -23,7 +24,7 @@ _SERVER_CONFIG = {
     },
 }
 
-RESEARCH_AGENT_SYSTEM_PROMPT = """あなたはユーザからの指示に基づいて情報収集を行うresearch_agentです。
+SYSTEM_PROMPT = """あなたはユーザからの指示に基づいて情報収集を行うresearch_agentです。
 必要に応じてツールを実行し、正確な情報を出力してください。
 """
 
@@ -33,8 +34,23 @@ def create_research_agent(tools: list):
     return create_agent(
         model=get_chat_model(),
         tools=tools,
-        system_prompt=RESEARCH_AGENT_SYSTEM_PROMPT,
+        system_prompt=SYSTEM_PROMPT,
     )
+
+
+def as_tool(tools: list) -> BaseTool:
+    """エージェントを LangChain ツールとしてラップする。"""
+    agent = create_research_agent(tools)
+
+    @tool
+    async def research_agent(question: str) -> str:
+        """情報収集を行うエージェント。Web検索が必要な場合に使用する。"""
+        result = await agent.ainvoke(
+            {"messages": [{"role": "user", "content": question}]}
+        )
+        return result["messages"][-1].content
+
+    return research_agent
 
 
 @asynccontextmanager

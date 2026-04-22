@@ -15,9 +15,9 @@ from langgraph.store.memory import InMemoryStore
 from llm.chat_models import get_chat_model
 from llm.checkpoint import create_checkpointer, create_checkpoint_blobs_decoded_table, get_postgres_connection
 from llm.agent.middleware.wrap_tool_call import monitor_tool
-from llm.agent.research_agent import create_research_agent
-from llm.agent.vlm_agent import create_vlm_agent
-from llm.agent.coding_agent import create_coding_agent
+from llm.agent.subagent.research_agent import create_research_agent
+from llm.agent.subagent.vlm_agent import create_vlm_agent
+from llm.agent.subagent.coding_agent import create_coding_agent
 from llm.mcp.client._utils import open_mcp_tools
 from llm.logger import logger
 

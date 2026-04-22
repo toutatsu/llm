@@ -3,18 +3,19 @@
 shell-server / filesystem-server MCP のツールを使ってコード生成・実行を行う
 LangGraph ReAct エージェント。
 `async with get_coding_agent() as agent:` で単体利用可能。
-サブエージェントとして使う場合は `create_coding_agent(tools)` を利用する。
+`as_tool(tools)` で LangChain ツールとして利用可能。
 """
 
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from langchain.agents import create_agent
+from langchain_core.tools import BaseTool, tool
 
 from llm.chat_models import get_chat_model
 from llm.mcp.client._utils import open_mcp_tools
 
-_PROJECT_DIR = str(Path(__file__).parents[3])
+_PROJECT_DIR = str(Path(__file__).parents[4])
 
 _SERVER_CONFIG = {
     "shell-server": {
@@ -29,7 +30,7 @@ _SERVER_CONFIG = {
     },
 }
 
-CODING_AGENT_SYSTEM_PROMPT = """あなたはユーザからの指示に基づいてコードを生成・実行するcoding_agentです。
+SYSTEM_PROMPT = """あなたはユーザからの指示に基づいてコードを生成・実行するcoding_agentです。
 shellコマンドやプログラムを生成し、ツールを通じて実行してください。
 作業ディレクトリはサンドボックス領域（/home/llm/data/agent_filesystem/）です。
 """
@@ -43,8 +44,23 @@ def create_coding_agent(tools: list):
             model="qwen3-coder:480b-cloud",
         ),
         tools=tools,
-        system_prompt=CODING_AGENT_SYSTEM_PROMPT,
+        system_prompt=SYSTEM_PROMPT,
     )
+
+
+def as_tool(tools: list) -> BaseTool:
+    """エージェントを LangChain ツールとしてラップする。"""
+    agent = create_coding_agent(tools)
+
+    @tool
+    async def coding_agent(question: str) -> str:
+        """コードを生成・実行するエージェント。shellコマンドやプログラムの実行が必要な場合に使用する。"""
+        result = await agent.ainvoke(
+            {"messages": [{"role": "user", "content": question}]}
+        )
+        return result["messages"][-1].content
+
+    return coding_agent
 
 
 @asynccontextmanager

@@ -3,18 +3,19 @@
 filesystem-server MCP の `read_image_as_base64` ツールを使って
 ローカルパスまたはURLから画像を読み込み、内容を確認する LangGraph ReAct エージェント。
 `async with get_vlm_agent() as agent:` で単体利用可能。
-サブエージェントとして使う場合は `create_vlm_agent(tools)` を利用する。
+`as_tool(tools)` で LangChain ツールとして利用可能。
 """
 
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from langchain.agents import create_agent
+from langchain_core.tools import BaseTool, tool
 
 from llm.chat_models import get_chat_model
 from llm.mcp.client._utils import open_mcp_tools
 
-_PROJECT_DIR = str(Path(__file__).parents[3])
+_PROJECT_DIR = str(Path(__file__).parents[4])
 
 _SERVER_CONFIG = {
     "filesystem-server": {
@@ -24,7 +25,7 @@ _SERVER_CONFIG = {
     },
 }
 
-VLM_AGENT_SYSTEM_PROMPT = """あなたはユーザからの指示に基づいて画像を確認するvlm_agentです。
+SYSTEM_PROMPT = """あなたはユーザからの指示に基づいて画像を確認するvlm_agentです。
 ファイルパスやURLで指定された画像を read_image_as_base64 ツールで読み込み、
 内容について正確な情報を出力してください。
 """
@@ -38,8 +39,23 @@ def create_vlm_agent(tools: list):
             model="ministral-3:14b-cloud",
         ),
         tools=tools,
-        system_prompt=VLM_AGENT_SYSTEM_PROMPT,
+        system_prompt=SYSTEM_PROMPT,
     )
+
+
+def as_tool(tools: list) -> BaseTool:
+    """エージェントを LangChain ツールとしてラップする。"""
+    agent = create_vlm_agent(tools)
+
+    @tool
+    async def vlm_agent(question: str) -> str:
+        """画像を読み込み内容を確認するエージェント。ファイルパスやURLで画像を指定する。"""
+        result = await agent.ainvoke(
+            {"messages": [{"role": "user", "content": question}]}
+        )
+        return result["messages"][-1].content
+
+    return vlm_agent
 
 
 @asynccontextmanager
