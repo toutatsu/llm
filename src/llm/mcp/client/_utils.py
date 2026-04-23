@@ -7,6 +7,8 @@ from typing import Any
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langchain_mcp_adapters.tools import load_mcp_tools
 
+from llm.logger import logger
+
 
 @asynccontextmanager
 async def open_mcp_tools(server_config: dict[str, Any]):
@@ -26,7 +28,10 @@ async def open_mcp_tools(server_config: dict[str, Any]):
     async with contextlib.AsyncExitStack() as stack:
         all_tools = []
         for server_name in server_config:
+            logger.debug(f"MCPサーバ '{server_name}' に接続中...")
             session = await stack.enter_async_context(client.session(server_name))
             tools = await load_mcp_tools(session)
+            tool_names = [t.name for t in tools]
+            logger.debug(f"MCPサーバ '{server_name}': {len(tools)} ツールを読み込み → {tool_names}")
             all_tools.extend(tools)
         yield all_tools
