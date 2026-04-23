@@ -14,6 +14,7 @@ from llm.mcp.server._utils import tool_error_handler
 mcp = FastMCP("shell-server")
 
 _DEFAULT_WORKDIR = "/home/llm/data/agent_filesystem/"
+_MAX_OUTPUT_CHARS = 3000
 
 
 @mcp.tool()
@@ -23,7 +24,7 @@ def run_shell(command: str, working_dir: str = _DEFAULT_WORKDIR) -> str:
 
     Args:
         command: 実行するシェルコマンド。
-        working_dir: 作業ディレクトリ（デフォルト: エージェントのサンドボックス領域）。
+        working_dir: 作業ディレクトリ。デフォルトは /home/llm/data/agent_filesystem/（エージェントのサンドボックス領域）。
     """
     result = subprocess.run(
         command,
@@ -35,7 +36,10 @@ def run_shell(command: str, working_dir: str = _DEFAULT_WORKDIR) -> str:
     output = result.stdout
     if result.stderr:
         output += f"\n[stderr]\n{result.stderr}"
-    return output or "(no output)"
+    output = output or "(no output)"
+    if len(output) > _MAX_OUTPUT_CHARS:
+        output = output[:_MAX_OUTPUT_CHARS] + f"\n... (truncated, {len(output)} chars total)"
+    return output
 
 
 def main() -> None:
