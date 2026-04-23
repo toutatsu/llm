@@ -45,6 +45,7 @@ members = [
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
+    "anyio[trio]>=4.0",
 ]
 
 [tool.uv]

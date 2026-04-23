@@ -83,6 +83,8 @@ class LoggedRunnable:
             raise
 
     def __getattr__(self, name):
+        if name in ("_runnable", "_name"):
+            raise AttributeError(name)
         return getattr(self._runnable, name)
 
 

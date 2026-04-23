@@ -2,10 +2,12 @@ import llm.logger  # logger.configure() をインポート時に実行させて�
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
+from loguru import logger
+from llm.agent.deep_agent import LoggedRunnable
+
 
 @pytest.fixture
 def log_capture():
-    from loguru import logger
     messages = []
     handler_id = logger.add(
         lambda msg: messages.append(msg),
@@ -18,8 +20,6 @@ def log_capture():
 
 @pytest.mark.anyio
 async def test_logged_runnable_logs_start(log_capture):
-    from llm.agent.deep_agent import LoggedRunnable
-
     mock_runnable = MagicMock()
     mock_runnable.ainvoke = AsyncMock(return_value={"messages": []})
 
@@ -33,8 +33,6 @@ async def test_logged_runnable_logs_start(log_capture):
 
 @pytest.mark.anyio
 async def test_logged_runnable_logs_complete_with_timing(log_capture):
-    from llm.agent.deep_agent import LoggedRunnable
-
     mock_runnable = MagicMock()
     mock_runnable.ainvoke = AsyncMock(return_value={"messages": []})
 
@@ -50,8 +48,6 @@ async def test_logged_runnable_logs_complete_with_timing(log_capture):
 
 @pytest.mark.anyio
 async def test_logged_runnable_logs_error(log_capture):
-    from llm.agent.deep_agent import LoggedRunnable
-
     mock_runnable = MagicMock()
     mock_runnable.ainvoke = AsyncMock(side_effect=RuntimeError("API failure"))
 
@@ -67,8 +63,6 @@ async def test_logged_runnable_logs_error(log_capture):
 
 @pytest.mark.anyio
 async def test_logged_runnable_reraises_exception():
-    from llm.agent.deep_agent import LoggedRunnable
-
     mock_runnable = MagicMock()
     mock_runnable.ainvoke = AsyncMock(side_effect=ValueError("bad input"))
 
@@ -79,8 +73,6 @@ async def test_logged_runnable_reraises_exception():
 
 
 def test_logged_runnable_delegates_attributes():
-    from llm.agent.deep_agent import LoggedRunnable
-
     mock_runnable = MagicMock()
     mock_runnable.some_attr = "test_value"
 
