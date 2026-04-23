@@ -17,7 +17,7 @@ from langgraph.store.memory import InMemoryStore
 
 from llm.chat_models import get_chat_model
 from llm.checkpoint import create_checkpointer, create_checkpoint_blobs_decoded_table, get_postgres_connection
-from llm.agent.middleware.wrap_tool_call import monitor_tool
+from llm.agent.middleware.wrap_tool_call import make_monitor_tool
 from llm.agent.subagent.research_agent import create_research_agent
 from llm.agent.subagent.vlm_agent import create_vlm_agent
 from llm.agent.subagent.coding_agent import create_coding_agent
@@ -92,7 +92,7 @@ async def get_deep_agent(*, verbose: bool = False):
 
             middleware = [_build_skills_middleware()]
             if verbose:
-                middleware.append(monitor_tool)
+                middleware.append(make_monitor_tool(verbose=True))
             deep_agent = create_deep_agent(
                 model=get_chat_model(),
                 tools=deep_agent_tools,
