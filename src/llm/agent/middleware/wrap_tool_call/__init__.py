@@ -17,7 +17,7 @@ _console = Console(stderr=True)
 
 def make_monitor_tool(verbose: bool = False):
     @wrap_tool_call
-    def monitor_tool(
+    async def monitor_tool(
         request: ToolCallRequest,
         handler: Callable[[ToolCallRequest], ToolMessage | Command],
     ) -> ToolMessage | Command:
@@ -35,7 +35,7 @@ def make_monitor_tool(verbose: bool = False):
             ))
 
         try:
-            result = handler(request)
+            result = await handler(request)
             content = result.content if isinstance(result, ToolMessage) else str(result)
             logger.info(f"Tool result: {name}")
             logger.debug(f"Content:\n{content}")
