@@ -51,10 +51,20 @@ def as_tool(tools: list, skill_tools: list | None = None) -> BaseTool:
     agent = create_vlm_agent(tools, skill_tools=skill_tools)
 
     @tool
-    async def vlm_agent(question: str) -> str:
-        """画像を読み込み内容を確認するエージェント。ファイルパスやURLで画像を指定する。"""
+    async def vlm_agent(question: str, images: list[str] | None = None) -> str:
+        """画像を読み込み内容を確認するエージェント。
+
+        Args:
+            question: 画像に対する質問・指示
+            images: 画像のファイルパス（絶対パス）またはURLのリスト。省略可。複数指定可。
+        """
+        if images:
+            image_lines = "\n".join(f"- {img}" for img in images)
+            content = f"画像:\n{image_lines}\n質問: {question}"
+        else:
+            content = question
         result = await agent.ainvoke(
-            {"messages": [{"role": "user", "content": question}]}
+            {"messages": [{"role": "user", "content": content}]}
         )
         return result["messages"][-1].content
 

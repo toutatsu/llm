@@ -57,6 +57,9 @@ DEEP_AGENT_SYSTEM_PROMPT = """
 ## 画像解析について
 画像の内容確認・説明が必要な場合は必ず vlm_agent に委譲してください。
 自分で read_image_as_base64 を呼ばないでください（コンテキスト肥大化の原因になります）。
+画像がある場合は、ファイルパス（絶対パス）またはURLをメッセージに含めてください。複数の画像も指定可能です。
+例（1枚）: 「/path/to/image.jpg を説明してください」
+例（複数）: 「/path/to/a.png と /path/to/b.png を比較してください」
 
 回答は日本語で行ってください
 """
@@ -130,7 +133,7 @@ async def get_deep_agent(*, verbose: bool = False):
                     ),
                     CompiledSubAgent(
                         name="vlm_agent",
-                        description="ファイルパスやURLで指定された画像を読み込み、内容の確認を行うエージェント",
+                        description="画像を読み込み内容を確認するエージェント。画像のファイルパス（絶対パス）またはURLをメッセージに含めること（任意・複数可）。",
                         runnable=LoggedRunnable(create_vlm_agent(vlm_tools, skill_tools=vlm_skill_tools), "vlm_agent"),
                     ),
                     CompiledSubAgent(
