@@ -78,3 +78,14 @@ def test_logged_runnable_delegates_attributes():
 
     wrapped = LoggedRunnable(mock_runnable, "test_agent")
     assert wrapped.some_attr == "test_value"
+
+
+def test_logged_runnable_getattr_guard_raises_for_private_attrs():
+    mock_runnable = MagicMock()
+    wrapped = LoggedRunnable.__new__(LoggedRunnable)
+
+    with pytest.raises(AttributeError):
+        _ = wrapped._runnable
+
+    with pytest.raises(AttributeError):
+        _ = wrapped._name

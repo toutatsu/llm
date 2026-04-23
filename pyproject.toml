@@ -37,6 +37,9 @@ mcp-server = "llm.mcp.server.combined:main"
 mcp-demo = "llm.mcp.client.fastmcp_client:main"
 mcp-langchain = "llm.mcp.client.langchain_client:main"
 
+[tool.pytest.ini_options]
+anyio_mode = "auto"
+
 [tool.uv.workspace]
 members = [
     "llm",
