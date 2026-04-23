@@ -7,6 +7,7 @@ deepagents の create_deep_agent でサブエージェントを統括する。
 """
 
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -61,6 +62,30 @@ DEEP_AGENT_SYSTEM_PROMPT = """
 """
 
 
+class LoggedRunnable:
+    """サブエージェントの実行開始・完了・所要時間を logger で記録するラッパー。"""
+
+    def __init__(self, runnable, name: str):
+        self._runnable = runnable
+        self._name = name
+
+    async def ainvoke(self, input, config=None, **kwargs):
+        logger.info(f"サブエージェント開始: {self._name}")
+        start = time.monotonic()
+        try:
+            result = await self._runnable.ainvoke(input, config=config, **kwargs)
+            elapsed = time.monotonic() - start
+            logger.info(f"サブエージェント完了: {self._name} ({elapsed:.2f}s)")
+            return result
+        except Exception as e:
+            elapsed = time.monotonic() - start
+            logger.error(f"サブエージェントエラー: {self._name} ({elapsed:.2f}s): {e}")
+            raise
+
+    def __getattr__(self, name):
+        return getattr(self._runnable, name)
+
+
 def _build_skills_middleware() -> SkillsMiddleware:
     return SkillsMiddleware(
         backend=FilesystemBackend(root_dir=str(_SKILLS_DIR)),
@@ -90,29 +115,26 @@ async def get_deep_agent(*, verbose: bool = False):
                 if name not in _DEEP_AGENT_EXCLUDED_TOOLS
             ]
 
-            middleware = [_build_skills_middleware()]
-            if verbose:
-                middleware.append(make_monitor_tool(verbose=True))
             deep_agent = create_deep_agent(
                 model=get_chat_model(),
                 tools=deep_agent_tools,
                 system_prompt=DEEP_AGENT_SYSTEM_PROMPT,
-                middleware=middleware,
+                middleware=[_build_skills_middleware(), make_monitor_tool(verbose=verbose)],
                 subagents=[
                     CompiledSubAgent(
                         name="research_agent",
                         description="情報収集を行うエージェント",
-                        runnable=create_research_agent(research_tools),
+                        runnable=LoggedRunnable(create_research_agent(research_tools), "research_agent"),
                     ),
                     CompiledSubAgent(
                         name="vlm_agent",
                         description="ファイルパスやURLで指定された画像を読み込み、内容の確認を行うエージェント",
-                        runnable=create_vlm_agent(vlm_tools, skill_tools=vlm_skill_tools),
+                        runnable=LoggedRunnable(create_vlm_agent(vlm_tools, skill_tools=vlm_skill_tools), "vlm_agent"),
                     ),
                     CompiledSubAgent(
                         name="coding_agent",
                         description="shellコマンドやプログラムを生成、実行するエージェント",
-                        runnable=create_coding_agent(coding_tools),
+                        runnable=LoggedRunnable(create_coding_agent(coding_tools), "coding_agent"),
                     ),
                 ],
                 checkpointer=checkpointer,
@@ -125,6 +147,10 @@ async def get_deep_agent(*, verbose: bool = False):
                     "read_file": False,
                     "write_file": True,
                 },
+            )
+            logger.info(
+                f"deep_agent 起動: {len(deep_agent_tools)} ツール利用可能"
+                f" → {[t.name for t in deep_agent_tools]}"
             )
             yield deep_agent
     finally:
