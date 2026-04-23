@@ -18,7 +18,7 @@ def log_capture():
 
 def _make_mock_client(tool_names: list[str]):
     """ツール名リストから mock_client と mock_tool リストを返す。"""
-    mock_tools = [MagicMock(name=n) for n in tool_names]
+    mock_tools = [MagicMock() for _ in tool_names]
     for t, n in zip(mock_tools, tool_names):
         t.name = n
 
@@ -86,8 +86,6 @@ async def test_open_mcp_tools_multiple_servers(log_capture):
 
     mock_client = MagicMock()
     mock_client.session.side_effect = lambda name: make_cm(session_a if name == "server-a" else session_b)
-
-    load_results = {"server-a": tools_a, "server-b": tools_b}
 
     async def mock_load(session):
         if session is session_a:
