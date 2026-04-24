@@ -45,6 +45,24 @@
         "shell-server"
       ]
     },
+    "datetime-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/toutatsu/Desktop/git-repositories/llm",
+        "run",
+        "datetime-server"
+      ]
+    },
+    "http-server": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/home/toutatsu/Desktop/git-repositories/llm",
+        "run",
+        "http-server"
+      ]
+    },
     "postgres-deep-agent": {
       "command": "uvx",
       "args": [
