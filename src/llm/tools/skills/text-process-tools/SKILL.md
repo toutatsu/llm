@@ -1,11 +1,12 @@
 ---
 name: text-process-tools
-description: Use when the user asks to count characters, truncate text, extract patterns with regex, or split text into chunks for RAG. Provides count_chars, truncate_text, extract_pattern, and split_text tools.
+description: Use when the user asks to count characters, truncate text, extract patterns with regex, or split text into chunks for RAG. Provides word_count, truncate_text, extract_pattern, and split_text tools via MCP text-server.
 ---
 
 # Text Process Tools
 
 テキスト処理スキル。文字数カウント・切り詰め・正規表現抽出・RAG 向けチャンク分割を行う。
+MCP `text-server` のツールとして提供される。
 
 ## When to Use
 
@@ -14,13 +15,11 @@ description: Use when the user asks to count characters, truncate text, extract 
 - 正規表現でパターンに一致する部分を抽出したいとき
 - テキストを RAG 用にチャンク分割したいとき
 
-## Available Tools
-
-以下のツールはエージェントに登録済みで、直接呼び出せる。
+## Available Tools (MCP: text-server)
 
 | Tool | 引数 | 説明 |
 |------|------|------|
-| `count_chars` | `text` | 文字数・単語数・行数を返す |
+| `word_count` | `text` | 文字数・スペースなし文字数・単語数・行数を返す |
 | `truncate_text` | `text`, `max_chars`, `suffix` (省略可) | 指定文字数で切り詰める |
 | `extract_pattern` | `text`, `pattern`, `max_matches` (省略可) | 正規表現で一致部分を抽出する |
 | `split_text` | `text`, `chunk_size`, `overlap` (省略可) | テキストをチャンクに分割する |
@@ -36,9 +35,9 @@ description: Use when the user asks to count characters, truncate text, extract 
 
 ```
 ユーザー: 「このテキストは何文字ですか？」
-→ count_chars(text="...") を呼び出す
+→ word_count(text="...") を呼び出す
 
-ユーザー: 「100文字以内に要約して」（まず切り詰めで概算）
+ユーザー: 「100文字以内に要約して」
 → truncate_text(text="...", max_chars=100) を呼び出す
 
 ユーザー: 「メールアドレスを全部抽出して」

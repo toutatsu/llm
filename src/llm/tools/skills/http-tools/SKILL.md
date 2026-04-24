@@ -1,12 +1,13 @@
 ---
 name: http-tools
-description: Use when the user asks to fetch a URL, call a REST API, or send HTTP requests. Provides fetch_url, http_get_json, and http_post_json async tools.
+description: Use when the user asks to fetch a URL, call a REST API, or send HTTP requests. Provides fetch_url, http_get_json, and http_post_json tools via MCP http-server.
 compatibility: Requires httpx>=0.28.0
 ---
 
 # HTTP Tools
 
 HTTP/REST API 呼び出しスキル。URL のコンテンツ取得と JSON API との連携を行う。
+MCP `http-server` のツールとして提供される。
 
 ## When to Use
 
@@ -14,9 +15,7 @@ HTTP/REST API 呼び出しスキル。URL のコンテンツ取得と JSON API �
 - REST API（GET/POST）を呼び出す必要があるとき
 - 外部サービスの JSON API と連携するとき
 
-## Available Tools
-
-以下のツールはエージェントに登録済みで、直接呼び出せる。
+## Available Tools (MCP: http-server)
 
 | Tool | 引数 | 説明 |
 |------|------|------|
@@ -24,7 +23,6 @@ HTTP/REST API 呼び出しスキル。URL のコンテンツ取得と JSON API �
 | `http_get_json` | `url`, `params` (JSON 文字列) | REST API に GET リクエストを送る |
 | `http_post_json` | `url`, `body` (JSON 文字列) | REST API に POST リクエストを送る |
 
-- すべて非同期ツール（内部で `await` 処理）
 - タイムアウト: 10 秒
 - `params` / `body` は JSON 文字列で渡す（例: `'{"key": "value"}'`）
 

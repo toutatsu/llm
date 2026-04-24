@@ -1,12 +1,13 @@
 ---
 name: image-analysis
 description: Use when the user asks to look at, describe, or analyze an image (local path or URL). Always delegate image analysis to vlm_agent - never call read_image_as_base64 directly to avoid adding raw image data to the main agent context.
-compatibility: Requires vlm_agent subagent with read_image_as_base64 MCP tool.
+compatibility: Requires vlm_agent subagent with filesystem-server MCP tools.
 ---
 
 # Image Analysis
 
 画像解析スキル。ローカルパスまたはURLで指定された画像の内容確認・説明を vlm_agent に委譲する。
+関連ツールは MCP `filesystem-server` から提供される。
 
 ## When to Use
 
@@ -14,13 +15,12 @@ compatibility: Requires vlm_agent subagent with read_image_as_base64 MCP tool.
 - ファイルパスや URL で画像が指定されたとき
 - 画像の内容・オブジェクト・テキスト・色などについて質問されたとき
 
-## Available Tools
+## Available Tools (MCP: filesystem-server)
 
 | Tool | 引数 | 説明 |
 |------|------|------|
 | `get_image_metadata` | `source` | 画像のメタデータ（サイズ・フォーマット・モード）を返す |
-
-vlm_agent には `read_image_as_base64` (MCP) も登録されており、画像データをVLMに直接渡せる。
+| `read_image_as_base64` | `source` | 画像データを読み込む（vlm_agent 専用） |
 
 ## Instructions
 
@@ -37,7 +37,4 @@ vlm_agent には `read_image_as_base64` (MCP) も登録されており、画像�
 
 ユーザー: 「https://example.com/image.png に何が写っていますか？」
 → vlm_agent に「次の画像を説明してください: https://example.com/image.png」を渡す
-
-ユーザー: 「画像の中に数字が書いてありますか？」
-→ vlm_agent に「次の画像に数字が含まれているか確認してください: <パス>」を渡す
 ```

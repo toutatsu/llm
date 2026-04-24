@@ -1,12 +1,13 @@
 ---
 name: datetime-tools
-description: Use when the user asks about the current time, date differences, or timezone conversions. Provides get_current_datetime, calculate_date_difference, and convert_timezone tools.
+description: Use when the user asks about the current time, date differences, or timezone conversions. Provides get_current_datetime, calculate_date_difference, and convert_timezone tools via MCP datetime-server.
 compatibility: Requires Python 3.9+ (zoneinfo module)
 ---
 
 # Datetime Tools
 
 日時操作スキル。現在時刻の取得・日付差分の計算・タイムゾーン変換を行う。
+MCP `datetime-server` のツールとして提供される。
 
 ## When to Use
 
@@ -14,9 +15,7 @@ compatibility: Requires Python 3.9+ (zoneinfo module)
 - 2つの日付の間が何日かを計算する必要がある
 - 異なるタイムゾーン間で日時を変換する必要がある
 
-## Available Tools
-
-以下のツールはエージェントに登録済みで、直接呼び出せる。
+## Available Tools (MCP: datetime-server)
 
 | Tool | 引数 | 説明 |
 |------|------|------|
