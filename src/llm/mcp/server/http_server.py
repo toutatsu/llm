@@ -31,7 +31,10 @@ def fetch_url(url: str, max_chars: int = 2000) -> str:
     with httpx.Client(timeout=_TIMEOUT, follow_redirects=True) as client:
         response = client.get(url)
         response.raise_for_status()
-        return response.text[:max_chars]
+        text = response.text
+        if len(text) > max_chars:
+            return text[:max_chars] + f"\n... (truncated at {max_chars} chars)"
+        return text
 
 
 @mcp.tool()
@@ -47,7 +50,7 @@ def http_get_json(url: str, params: str = "{}") -> str:
         query_params = json.loads(params)
     except json.JSONDecodeError:
         return "エラー: params は有効な JSON 文字列で指定してください。"
-    with httpx.Client(timeout=_TIMEOUT) as client:
+    with httpx.Client(timeout=_TIMEOUT, follow_redirects=True) as client:
         response = client.get(url, params=query_params)
         response.raise_for_status()
         return json.dumps(response.json(), ensure_ascii=False, indent=2)
@@ -66,7 +69,7 @@ def http_post_json(url: str, body: str) -> str:
         payload = json.loads(body)
     except json.JSONDecodeError:
         return "エラー: body は有効な JSON 文字列で指定してください。"
-    with httpx.Client(timeout=_TIMEOUT) as client:
+    with httpx.Client(timeout=_TIMEOUT, follow_redirects=True) as client:
         response = client.post(url, json=payload)
         response.raise_for_status()
         return json.dumps(response.json(), ensure_ascii=False, indent=2)
