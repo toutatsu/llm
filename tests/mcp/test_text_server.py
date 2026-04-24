@@ -58,3 +58,15 @@ def test_split_text_with_overlap():
 def test_split_text_zero_chunk_size():
     result = split_text("abc", 0)
     assert result == ["abc"]
+
+
+def test_truncate_text_suffix_longer_than_max():
+    # max_chars < len(suffix) の場合は suffix だけ返す (切り詰め通知のみ)
+    result = truncate_text("abcde", 2, suffix="...")
+    assert len(result) <= 5  # 元の文字列より長くなってはいけない
+
+
+def test_extract_pattern_with_capture_group():
+    result = extract_pattern("2025-01-01", r"(\d{4})-(\d{2})-(\d{2})")
+    assert isinstance(result, list)
+    assert all(isinstance(item, str) for item in result)

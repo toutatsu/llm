@@ -48,7 +48,8 @@ def truncate_text(text: str, max_chars: int, suffix: str = "…") -> str:
     """
     if len(text) <= max_chars:
         return text
-    return text[: max_chars - len(suffix)] + suffix
+    cut = max(0, max_chars - len(suffix))
+    return text[:cut] + suffix
 
 
 @mcp.tool()
@@ -63,7 +64,8 @@ def extract_pattern(text: str, pattern: str, max_matches: int = 20) -> list[str]
     """
     try:
         matches = re.findall(pattern, text)
-        return matches[:max_matches]
+        normalized = [str(m) if not isinstance(m, str) else m for m in matches]
+        return normalized[:max_matches]
     except re.error as e:
         return [f"エラー: 正規表現が不正です: {e}"]
 
