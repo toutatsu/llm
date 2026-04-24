@@ -23,7 +23,6 @@ from llm.agent.subagent.research_agent import create_research_agent
 from llm.agent.subagent.vlm_agent import create_vlm_agent
 from llm.agent.subagent.coding_agent import create_coding_agent
 from llm.mcp.client._utils import open_mcp_tools
-from llm.tools.skill_loader import load_skills
 from llm.logger import logger
 
 _MCP_HOST = os.environ.get("MCP_HOST", "mcp")
@@ -35,20 +34,21 @@ _ALL_SERVER_CONFIG = {
     "search-server":     {"url": f"{_MCP_BASE}/search/mcp",     "transport": "streamable_http"},
     "shell-server":      {"url": f"{_MCP_BASE}/shell/mcp",      "transport": "streamable_http"},
     "filesystem-server": {"url": f"{_MCP_BASE}/filesystem/mcp", "transport": "streamable_http"},
+    "datetime-server":   {"url": f"{_MCP_BASE}/datetime/mcp",   "transport": "streamable_http"},
+    "http-server":       {"url": f"{_MCP_BASE}/http/mcp",       "transport": "streamable_http"},
     "postgres-server":   {"url": f"{_MCP_BASE}/postgres/mcp",   "transport": "streamable_http"},
 }
 
 # サブエージェントに割り当てるツール名のセット
 _RESEARCH_TOOLS = {"google_search"}
 _CODING_TOOLS = {"run_shell", "read_text_file", "read_image_as_base64"}
-_VLM_TOOLS = {"read_image_as_base64"}
+_VLM_TOOLS = {"read_image_as_base64", "get_image_metadata"}
 
 # deep_agent 自身には渡さないツール（サブエージェント専用）
 # read_image_as_base64 を直接呼ぶと生の画像データが deep_agent のコンテキストに蓄積されるため
 _DEEP_AGENT_EXCLUDED_TOOLS = {"read_image_as_base64"}
 
 _SKILLS_DIR = Path(__file__).parent.parent / "tools" / "skills"
-_VLM_SKILL_NAME = "image-analysis"
 
 DEEP_AGENT_SYSTEM_PROMPT = """
 あなたはユーザからの指示に基づき回答を行うdeep_agentです
@@ -107,11 +107,8 @@ async def get_deep_agent(*, verbose: bool = False):
     """
     checkpointer, conn = create_checkpointer("deep_agent_db")
     try:
-        skill_tools = load_skills()
-        vlm_skill_tools = load_skills(_VLM_SKILL_NAME)
         async with open_mcp_tools(_ALL_SERVER_CONFIG) as mcp_tools:
-            all_tools = [*mcp_tools, *skill_tools]
-            tool_map = {t.name: t for t in all_tools}
+            tool_map = {t.name: t for t in mcp_tools}
             research_tools = [t for name, t in tool_map.items() if name in _RESEARCH_TOOLS]
             coding_tools = [t for name, t in tool_map.items() if name in _CODING_TOOLS]
             vlm_tools = [t for name, t in tool_map.items() if name in _VLM_TOOLS]
@@ -134,7 +131,7 @@ async def get_deep_agent(*, verbose: bool = False):
                     CompiledSubAgent(
                         name="vlm_agent",
                         description="画像を読み込み内容を確認するエージェント。画像のファイルパス（絶対パス）またはURLをメッセージに含めること（任意・複数可）。",
-                        runnable=LoggedRunnable(create_vlm_agent(vlm_tools, skill_tools=vlm_skill_tools), "vlm_agent"),
+                        runnable=LoggedRunnable(create_vlm_agent(vlm_tools), "vlm_agent"),
                     ),
                     CompiledSubAgent(
                         name="coding_agent",

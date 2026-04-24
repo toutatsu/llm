@@ -1,6 +1,6 @@
 """画像解析エージェント。
 
-filesystem-server MCP の `read_image_as_base64` ツールを使って
+filesystem-server MCP の `read_image_as_base64` と `get_image_metadata` ツールを使って
 ローカルパスまたはURLから画像を読み込み、内容を確認する LangGraph ReAct エージェント。
 `async with get_vlm_agent() as agent:` で単体利用可能。
 `as_tool(tools)` で LangChain ツールとして利用可能。
@@ -31,24 +31,22 @@ read_image_as_base64 で画像を読み込み、内容（概要・オブジェ�
 """
 
 
-def create_vlm_agent(tools: list, skill_tools: list | None = None):
+def create_vlm_agent(tools: list):
     """ツールリストを受け取りエージェントを生成する（サブエージェント用）。
 
     Args:
-        tools: MCPサーバ由来のツール（read_image_as_base64 など）
-        skill_tools: スキルローダー由来の追加ツール（get_image_metadata など）
+        tools: MCPサーバ由来のツール（read_image_as_base64, get_image_metadata など）
     """
-    all_tools = [*tools, *(skill_tools or [])]
     return create_agent(
         model=get_vlm_chat_model(),
-        tools=all_tools,
+        tools=tools,
         system_prompt=SYSTEM_PROMPT,
     )
 
 
-def as_tool(tools: list, skill_tools: list | None = None) -> BaseTool:
+def as_tool(tools: list) -> BaseTool:
     """エージェントを LangChain ツールとしてラップする。"""
-    agent = create_vlm_agent(tools, skill_tools=skill_tools)
+    agent = create_vlm_agent(tools)
 
     @tool
     async def vlm_agent(question: str, images: list[str] | None = None) -> str:
@@ -72,10 +70,10 @@ def as_tool(tools: list, skill_tools: list | None = None) -> BaseTool:
 
 
 @asynccontextmanager
-async def get_vlm_agent(skill_tools: list | None = None):
+async def get_vlm_agent():
     """filesystem-server に永続接続し、ツール付きエージェントを yield する。"""
     async with open_mcp_tools(_SERVER_CONFIG) as tools:
-        yield create_vlm_agent(tools, skill_tools=skill_tools)
+        yield create_vlm_agent(tools)
 
 
 if __name__ == "__main__":
