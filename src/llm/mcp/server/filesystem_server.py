@@ -5,6 +5,7 @@ Resources:
 
 Tools:
   - read_image_as_base64 : ローカルパスまたはURLから画像をImageContentとして返す
+  - get_image_metadata   : ローカルパスまたはURLから画像のメタデータを返す
 """
 
 import sys
@@ -80,6 +81,37 @@ def read_image_as_base64(source: str) -> Image | str:
             return f"ファイルが見つかりません: {source}"
         data = _resize(p.read_bytes(), p.suffix.lstrip(".").lower())
         return Image(data=data, format=p.suffix.lstrip(".").lower())
+
+
+@mcp.tool()
+@tool_error_handler
+def get_image_metadata(source: str) -> str:
+    """ローカルパスまたはURLから画像のメタデータを返します。
+
+    画像データをLLMコンテキストに載せずに、サイズ・フォーマット・カラーモードを確認します。
+
+    Args:
+        source: 画像のローカルパスまたはURL。
+    """
+    if source.startswith("http://") or source.startswith("https://"):
+        headers = {"User-Agent": "Mozilla/5.0 (compatible; llm-agent/1.0)"}
+        response = requests.get(source, timeout=30, headers=headers)
+        response.raise_for_status()
+        data = response.content
+    else:
+        p = Path(source)
+        if not p.exists():
+            return f"ファイルが見つかりません: {source}"
+        data = p.read_bytes()
+    try:
+        img = PILImage.open(BytesIO(data))
+    except Exception as e:
+        return f"メタデータ取得エラー: {e}"
+    return (
+        f"フォーマット: {img.format}\n"
+        f"サイズ: {img.width} x {img.height} px\n"
+        f"カラーモード: {img.mode}"
+    )
 
 
 def main() -> None:
