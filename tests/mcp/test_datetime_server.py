@@ -1,4 +1,5 @@
-import pytest
+import re
+
 from llm.mcp.server.datetime_server import (
     get_current_datetime,
     calculate_date_difference,
@@ -9,6 +10,7 @@ from llm.mcp.server.datetime_server import (
 def test_get_current_datetime_returns_jst():
     result = get_current_datetime("Asia/Tokyo")
     assert "JST" in result
+    assert re.match(r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", result)
 
 
 def test_get_current_datetime_invalid_tz():
@@ -39,4 +41,9 @@ def test_convert_timezone_utc_to_jst():
 
 def test_convert_timezone_invalid_format():
     result = convert_timezone("2025/01/01", "UTC", "Asia/Tokyo")
+    assert "エラー" in result
+
+
+def test_convert_timezone_invalid_tz():
+    result = convert_timezone("2025-01-01 00:00:00", "Invalid/Zone", "Asia/Tokyo")
     assert "エラー" in result

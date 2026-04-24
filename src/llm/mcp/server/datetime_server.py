@@ -61,13 +61,15 @@ def convert_timezone(dt_str: str, from_tz: str, to_tz: str) -> str:
         to_tz: 変換先タイムゾーン名（例: "Asia/Tokyo"）。
     """
     try:
-        dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S").replace(
-            tzinfo=ZoneInfo(from_tz)
-        )
+        dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return f"エラー: 日時形式が不正です（YYYY-MM-DD HH:MM:SS）: {dt_str}"
+    try:
+        dt = dt.replace(tzinfo=ZoneInfo(from_tz))
         converted = dt.astimezone(ZoneInfo(to_tz))
-        return converted.strftime("%Y-%m-%d %H:%M:%S %Z")
-    except (ValueError, ZoneInfoNotFoundError) as e:
-        return f"エラー: {e}"
+    except ZoneInfoNotFoundError as e:
+        return f"エラー: タイムゾーンが見つかりません: {e}"
+    return converted.strftime("%Y-%m-%d %H:%M:%S %Z")
 
 
 def main() -> None:
