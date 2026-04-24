@@ -97,21 +97,27 @@ def get_image_metadata(source: str) -> str:
         headers = {"User-Agent": "Mozilla/5.0 (compatible; llm-agent/1.0)"}
         response = requests.get(source, timeout=30, headers=headers)
         response.raise_for_status()
+        content_type = response.headers.get("Content-Type", "")
+        if not content_type.startswith("image/"):
+            return f"URLが画像を返しませんでした (Content-Type: {content_type!r})"
+        fmt = content_type.split("/")[1].split(";")[0].strip()
+        fmt = {"jpg": "jpeg", "tif": "tiff"}.get(fmt, fmt)
         data = response.content
     else:
         p = Path(source)
         if not p.exists():
             return f"ファイルが見つかりません: {source}"
         data = p.read_bytes()
+        fmt = p.suffix.lstrip(".").lower() or "unknown"
     try:
         img = PILImage.open(BytesIO(data))
+        return (
+            f"フォーマット: {fmt.upper()}\n"
+            f"サイズ: {img.width} x {img.height} px\n"
+            f"カラーモード: {img.mode}"
+        )
     except Exception as e:
         return f"メタデータ取得エラー: {e}"
-    return (
-        f"フォーマット: {img.format}\n"
-        f"サイズ: {img.width} x {img.height} px\n"
-        f"カラーモード: {img.mode}"
-    )
 
 
 def main() -> None:
