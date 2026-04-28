@@ -13,7 +13,7 @@ from deepagents.backends import FilesystemBackend
 from deepagents.middleware.skills import SkillsMiddleware
 from langchain.agents import create_agent
 
-from llm.agent.middleware.wrap_tool_call import monitor_tool
+from llm.agent.middleware.wrap_tool_call import make_monitor_tool
 from llm.agent.subagent.vlm_agent import as_tool as vlm_as_tool
 from llm.chat_models import get_chat_model
 from llm.checkpoint import create_async_checkpointer
@@ -56,7 +56,7 @@ async def get_agent(*, verbose: bool = False):
     model = get_chat_model()
     middleware = [_build_skills_middleware()]
     if verbose:
-        middleware.append(monitor_tool)
+        middleware.append(make_monitor_tool())
     async with create_async_checkpointer("agent_db") as checkpointer:
         async with open_mcp_tools(_SERVER_CONFIG) as mcp_tools:
             tool_map = {t.name: t for t in mcp_tools}

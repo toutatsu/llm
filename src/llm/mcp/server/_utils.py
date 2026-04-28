@@ -5,7 +5,8 @@ import inspect
 import traceback
 from typing import get_origin
 
-from loguru import logger
+# from loguru import logger
+from llm.logger import logger
 
 
 def tool_error_handler(func):
@@ -28,7 +29,11 @@ def tool_error_handler(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
+            logger.info(f"{args=}")
+            logger.info(f"{kwargs=}")
+            tool_result = func(*args, **kwargs)
+            logger.info(f"{tool_result=}")
+            return tool_result
         except Exception as e:
             logger.error(
                 f"[{func.__name__}] {type(e).__name__}: {e}\n{traceback.format_exc()}"

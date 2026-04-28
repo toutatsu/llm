@@ -17,6 +17,7 @@ from fastmcp import FastMCP
 from fastmcp.utilities.types import Image
 from PIL import Image as PILImage
 
+from llm.logger import logger
 from llm.mcp.server._utils import tool_error_handler
 
 mcp = FastMCP("filesystem-server")
@@ -65,22 +66,41 @@ def read_image_as_base64(source: str) -> Image | str:
     Args:
         source: 画像のローカルパスまたはURL。
     """
-    if source.startswith("http://") or source.startswith("https://"):
-        headers = {"User-Agent": "Mozilla/5.0 (compatible; llm-agent/1.0)"}
-        response = requests.get(source, timeout=30, headers=headers)
-        response.raise_for_status()
-        content_type = response.headers.get("Content-Type", "")
-        if not content_type.startswith("image/"):
-            return f"URLが画像を返しませんでした (Content-Type: {content_type!r})"
-        mime_format = content_type.split("/")[1].split(";")[0].strip()
-        mime_format = {"jpg": "jpeg", "tif": "tiff"}.get(mime_format, mime_format)
-        return Image(data=_resize(response.content, mime_format), format=mime_format)
-    else:
-        p = Path(source)
-        if not p.exists():
-            return f"ファイルが見つかりません: {source}"
-        data = _resize(p.read_bytes(), p.suffix.lstrip(".").lower())
-        return Image(data=data, format=p.suffix.lstrip(".").lower())
+    logger.debug(f"read_image_as_base64 called with source={source!r}")
+    try:
+        if source.startswith("http://") or source.startswith("https://"):
+            headers = {"User-Agent": "Mozilla/5.0 (compatible; llm-agent/1.0)"}
+            logger.debug(f"Fetching image from URL: {source}")
+            response = requests.get(source, timeout=30, headers=headers)
+            response.raise_for_status()
+            logger.debug(f"URL response: status={response.status_code}, content-type={response.headers.get('Content-Type')}, size={len(response.content)} bytes")
+            content_type = response.headers.get("Content-Type", "")
+            if not content_type.startswith("image/"):
+                logger.warning(f"URL did not return an image: Content-Type={content_type!r}")
+                return f"URLが画像を返しませんでした (Content-Type: {content_type!r})"
+            mime_format = content_type.split("/")[1].split(";")[0].strip()
+            mime_format = {"jpg": "jpeg", "tif": "tiff"}.get(mime_format, mime_format)
+            resized = _resize(response.content, mime_format)
+            logger.debug(f"Resized URL image: format={mime_format}, original={len(response.content)} bytes, resized={len(resized)} bytes")
+            result = Image(data=resized, format=mime_format)
+            logger.debug(f"Returning ImageContent: format={mime_format}, size={len(resized)}")
+            return result
+        else:
+            p = Path(source)
+            logger.debug(f"Reading local file: path={p}, exists={p.exists()}, is_file={p.is_file() if p.exists() else 'N/A'}")
+            if not p.exists():
+                logger.warning(f"Local file not found: {source}")
+                return f"ファイルが見つかりません: {source}"
+            raw = p.read_bytes()
+            logger.debug(f"Local file read: path={source}, size={len(raw)} bytes, suffix={p.suffix!r}")
+            data = _resize(raw, p.suffix.lstrip(".").lower())
+            logger.debug(f"Resized local image: format={p.suffix.lstrip('.')}, original={len(raw)} bytes, resized={len(data)} bytes")
+            result = Image(data=data, format=p.suffix.lstrip(".").lower())
+            logger.debug(f"Returning ImageContent: format={p.suffix.lstrip('.')}, size={len(data)}")
+            return result
+    except Exception as e:
+        logger.exception(f"read_image_as_base64 failed for source={source!r}: {e}")
+        return f"画像の読み込みに失敗しました: {e}"
 
 
 @mcp.tool()
