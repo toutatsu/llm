@@ -16,7 +16,8 @@ def tool_error_handler(func):
     ツールの戻り値の型に合わせたエラー形式を返す。これによりエージェントが
     エラーを認識して対処できる。
 
-    - list[dict] を返すツール: [{"error": "ErrorType: message"}]
+    - list[...] を返すツール: [{"error": "ErrorType: message"}]
+    - dict を返すツール: {"error": "ErrorType: message"}
     - それ以外: "ErrorType: message"
 
     使用例:
@@ -44,6 +45,8 @@ def tool_error_handler(func):
                 origin = get_origin(return_type)
                 if origin is list:
                     return [{"error": error_msg}]
+                if origin is dict:
+                    return {"error": error_msg}
             return error_msg
 
     return wrapper

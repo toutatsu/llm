@@ -12,7 +12,7 @@ import sys
 from io import BytesIO
 from pathlib import Path
 
-import requests
+import httpx
 from fastmcp import FastMCP
 from fastmcp.utilities.types import Image
 from PIL import Image as PILImage
@@ -71,7 +71,7 @@ def read_image_as_base64(source: str) -> Image | str:
         if source.startswith("http://") or source.startswith("https://"):
             headers = {"User-Agent": "Mozilla/5.0 (compatible; llm-agent/1.0)"}
             logger.debug(f"Fetching image from URL: {source}")
-            response = requests.get(source, timeout=30, headers=headers)
+            response = httpx.get(source, timeout=30, headers=headers, follow_redirects=True)
             response.raise_for_status()
             logger.debug(f"URL response: status={response.status_code}, content-type={response.headers.get('Content-Type')}, size={len(response.content)} bytes")
             content_type = response.headers.get("Content-Type", "")
@@ -115,7 +115,7 @@ def get_image_metadata(source: str) -> str:
     """
     if source.startswith("http://") or source.startswith("https://"):
         headers = {"User-Agent": "Mozilla/5.0 (compatible; llm-agent/1.0)"}
-        response = requests.get(source, timeout=30, headers=headers)
+        response = httpx.get(source, timeout=30, headers=headers, follow_redirects=True)
         response.raise_for_status()
         content_type = response.headers.get("Content-Type", "")
         if not content_type.startswith("image/"):
