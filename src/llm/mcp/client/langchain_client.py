@@ -22,7 +22,7 @@ _SERVER_CONFIG = {
     "search-server":     {"url": f"{_MCP_BASE}/search/mcp",     "transport": "streamable_http"},
     "shell-server":      {"url": f"{_MCP_BASE}/shell/mcp",      "transport": "streamable_http"},
     "filesystem-server": {"url": f"{_MCP_BASE}/filesystem/mcp", "transport": "streamable_http"},
-    "deep-agent-db-server": {"url": f"{_MCP_BASE}/deep-agent-db/mcp", "transport": "streamable_http"},
+    "postgres-db-server": {"url": f"{_MCP_BASE}/postgres-db/mcp", "transport": "streamable_http"},
 }
 
 

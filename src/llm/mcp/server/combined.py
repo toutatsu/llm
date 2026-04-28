@@ -19,28 +19,23 @@ _PROJECT_DIR = str(Path(__file__).parents[4])
 _POSTGRES_HOST = os.environ.get("POSTGRES_HOST", "postgres")
 _POSTGRES_BASE = f"postgresql://postgres:example@{_POSTGRES_HOST}:5432"
 
-def _make_postgres_proxy(db_name: str):
-    url = f"{_POSTGRES_BASE}/{db_name}"
-    return create_proxy(
-        {
-            "mcpServers": {
-                "postgres": {
-                    "command": "uv",
-                    "args": [
-                        "--directory",
-                        _PROJECT_DIR,
-                        "run",
-                        "postgres-mcp",
-                        url,
-                        "--access-mode=unrestricted",
-                    ],
-                }
+_postgres_db_proxy = create_proxy(
+    {
+        "mcpServers": {
+            "postgres": {
+                "command": "uv",
+                "args": [
+                    "--directory",
+                    _PROJECT_DIR,
+                    "run",
+                    "postgres-mcp",
+                    f"{_POSTGRES_BASE}/postgres",
+                    "--access-mode=unrestricted",
+                ],
             }
         }
-    )
-
-_deep_agent_db_proxy = _make_postgres_proxy("deep_agent_db")
-_postgres_db_proxy = _make_postgres_proxy("postgres")
+    }
+)
 
 _math_app = math_mcp.http_app(transport="streamable-http")
 _text_app = text_mcp.http_app(transport="streamable-http")
@@ -49,7 +44,6 @@ _shell_app = shell_mcp.http_app(transport="streamable-http")
 _filesystem_app = filesystem_mcp.http_app(transport="streamable-http")
 _datetime_app = datetime_mcp.http_app(transport="streamable-http")
 _http_app = http_mcp.http_app(transport="streamable-http")
-_deep_agent_db_app = _deep_agent_db_proxy.http_app(transport="streamable-http")
 _postgres_db_app = _postgres_db_proxy.http_app(transport="streamable-http")
 
 
@@ -62,9 +56,8 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
                     async with _filesystem_app.router.lifespan_context(app):
                         async with _datetime_app.router.lifespan_context(app):
                             async with _http_app.router.lifespan_context(app):
-                                async with _deep_agent_db_app.router.lifespan_context(app):
-                                    async with _postgres_db_app.router.lifespan_context(app):
-                                        yield
+                                async with _postgres_db_app.router.lifespan_context(app):
+                                    yield
 
 
 app = FastAPI(title="MCP Combined Server", lifespan=_lifespan)
@@ -75,7 +68,6 @@ app.mount("/shell", _shell_app)
 app.mount("/filesystem", _filesystem_app)
 app.mount("/datetime", _datetime_app)
 app.mount("/http", _http_app)
-app.mount("/deep-agent-db", _deep_agent_db_app)
 app.mount("/postgres-db", _postgres_db_app)
 
 
