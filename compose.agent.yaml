@@ -1,0 +1,46 @@
+services:
+  python:
+
+    # image: python:latest
+
+    build:
+      context: .
+      dockerfile: python.Dockerfile
+      args:
+        USER_UID: ${HOST_UID:-1000}
+        USER_GID: ${HOST_GID:-1000}
+
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+
+    stdin_open: true
+    tty: true
+
+    env_file:
+      - .env
+
+    environment:
+      UV_CACHE_DIR: /tmp/.cache/uv
+      MCP_HOST: mcp
+
+    volumes:
+      - type: bind
+        source: .
+        target: /home/llm
+      - type: volume
+        source: python_venv
+        target: /home/llm/.venv
+
+    ports:
+      - ${LLM_API_PORT}:${LLM_API_PORT}
+
+    networks:
+      - llm_network
+
+    container_name: llm-agent-container
+
+
+    entrypoint: [ "sh", "-c" ]
+    command: [ "uv run fastapi run /home/llm/src/llm/api --port $LLM_API_PORT --reload" ]
+
+volumes:
+  python_venv:

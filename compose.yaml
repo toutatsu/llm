@@ -4,7 +4,7 @@ include:
   # - compose.vllm.yaml
   - compose.openwebui.yaml
   - compose.mcp.yaml
-  - compose.python.yaml
+  - compose.agent.yaml
   - compose.postgres.yaml
 
 networks:

@@ -29,6 +29,8 @@ dependencies = [
 ]
 
 [project.scripts]
+agent = "llm.cli._cli:agent_main"
+deepagent = "llm.cli._cli:deepagent_main"
 math-server = "llm.mcp.server.math_server:main"
 text-server = "llm.mcp.server.text_server:main"
 filesystem-server = "llm.mcp.server.filesystem_server:main"
