@@ -17,7 +17,7 @@ from deepagents.middleware.skills import SkillsMiddleware
 from langgraph.store.memory import InMemoryStore
 
 from llm.chat_models import get_chat_model
-from llm.checkpoint import create_checkpointer, create_checkpoint_blobs_decoded_table, get_postgres_connection
+from llm.checkpoint import create_async_checkpointer, create_checkpoint_blobs_decoded_table, get_postgres_connection
 from llm.agent.middleware.wrap_tool_call import make_monitor_tool
 from llm.agent.subagent.research_agent import create_research_agent
 from llm.agent.subagent.vlm_agent import create_vlm_agent
@@ -105,8 +105,7 @@ async def get_deep_agent(*, verbose: bool = False):
     Args:
         verbose: True のとき、ツール呼び出しの名前・引数・結果を標準エラーに表示する。
     """
-    checkpointer, conn = create_checkpointer("deep_agent_db")
-    try:
+    async with create_async_checkpointer("deep_agent_db") as checkpointer:
         async with open_mcp_tools(_ALL_SERVER_CONFIG) as mcp_tools:
             tool_map = {t.name: t for t in mcp_tools}
             research_tools = [t for name, t in tool_map.items() if name in _RESEARCH_TOOLS]
@@ -155,8 +154,6 @@ async def get_deep_agent(*, verbose: bool = False):
                 f" → {[t.name for t in deep_agent_tools]}"
             )
             yield deep_agent
-    finally:
-        conn.close()
 
 
 if __name__ == "__main__":
