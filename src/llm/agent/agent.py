@@ -30,7 +30,8 @@ _SERVER_CONFIG = {
     "filesystem-server": {"url": f"{_MCP_BASE}/filesystem/mcp", "transport": "streamable_http"},
     "datetime-server":   {"url": f"{_MCP_BASE}/datetime/mcp",   "transport": "streamable_http"},
     "http-server":       {"url": f"{_MCP_BASE}/http/mcp",       "transport": "streamable_http"},
-    "postgres-server":   {"url": f"{_MCP_BASE}/postgres/mcp",   "transport": "streamable_http"},
+    "postgres-server":        {"url": f"{_MCP_BASE}/postgres/mcp",        "transport": "streamable_http"},
+    "postgres-public-server": {"url": f"{_MCP_BASE}/postgres-public/mcp", "transport": "streamable_http"},
 }
 
 _SKILLS_DIR = Path(__file__).parent.parent / "tools" / "skills"
