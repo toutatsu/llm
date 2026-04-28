@@ -42,7 +42,10 @@ docker compose up -d
 ### 3. CLIセットアップ
 
 ```sh
-chmod +x llm.sh && sudo ln -s $(pwd)/llm.sh /usr/local/bin/llm
+chmod +x llm.sh agent.sh deepagent.sh
+sudo ln -s $(pwd)/llm.sh /usr/local/bin/llm
+sudo ln -s $(pwd)/agent.sh /usr/local/bin/agent
+sudo ln -s $(pwd)/deepagent.sh /usr/local/bin/deepagent
 ```
 
 ## 使い方
@@ -50,7 +53,8 @@ chmod +x llm.sh && sudo ln -s $(pwd)/llm.sh /usr/local/bin/llm
 ### CLI（対話型）
 
 ```sh
-llm
+agent       # 汎用エージェント
+deepagent   # deep agent（サブエージェントあり）
 ```
 
 ### Web UI
