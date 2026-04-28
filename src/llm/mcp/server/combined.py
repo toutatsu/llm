@@ -39,8 +39,8 @@ def _make_postgres_proxy(db_name: str):
         }
     )
 
-_postgres_proxy = _make_postgres_proxy("deep_agent_db")
-_postgres_public_proxy = _make_postgres_proxy("postgres")
+_deep_agent_db_proxy = _make_postgres_proxy("deep_agent_db")
+_postgres_db_proxy = _make_postgres_proxy("postgres")
 
 _math_app = math_mcp.http_app(transport="streamable-http")
 _text_app = text_mcp.http_app(transport="streamable-http")
@@ -49,8 +49,8 @@ _shell_app = shell_mcp.http_app(transport="streamable-http")
 _filesystem_app = filesystem_mcp.http_app(transport="streamable-http")
 _datetime_app = datetime_mcp.http_app(transport="streamable-http")
 _http_app = http_mcp.http_app(transport="streamable-http")
-_postgres_app = _postgres_proxy.http_app(transport="streamable-http")
-_postgres_public_app = _postgres_public_proxy.http_app(transport="streamable-http")
+_deep_agent_db_app = _deep_agent_db_proxy.http_app(transport="streamable-http")
+_postgres_db_app = _postgres_db_proxy.http_app(transport="streamable-http")
 
 
 @asynccontextmanager
@@ -62,8 +62,8 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
                     async with _filesystem_app.router.lifespan_context(app):
                         async with _datetime_app.router.lifespan_context(app):
                             async with _http_app.router.lifespan_context(app):
-                                async with _postgres_app.router.lifespan_context(app):
-                                    async with _postgres_public_app.router.lifespan_context(app):
+                                async with _deep_agent_db_app.router.lifespan_context(app):
+                                    async with _postgres_db_app.router.lifespan_context(app):
                                         yield
 
 
@@ -75,8 +75,8 @@ app.mount("/shell", _shell_app)
 app.mount("/filesystem", _filesystem_app)
 app.mount("/datetime", _datetime_app)
 app.mount("/http", _http_app)
-app.mount("/postgres", _postgres_app)
-app.mount("/postgres-public", _postgres_public_app)
+app.mount("/deep-agent-db", _deep_agent_db_app)
+app.mount("/postgres-db", _postgres_db_app)
 
 
 def main() -> None:
